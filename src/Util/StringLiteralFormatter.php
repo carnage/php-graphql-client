@@ -9,7 +9,7 @@ namespace GraphQL\Util;
  */
 class StringLiteralFormatter
 {
-    const ESCAPE_SEQUENCES = [
+    private const ESCAPE_SEQUENCES = [
         '\\u0000', '\\u0001', '\\u0002', '\\u0003', '\\u0004', '\\u0005', '\\u0006', '\\u0007',
         '\\b',     '\\t',     '\\n',     '\\u000B', '\\f',     '\\r',     '\\u000E', '\\u000F',
         '\\u0010', '\\u0011', '\\u0012', '\\u0013', '\\u0014', '\\u0015', '\\u0016', '\\u0017',
@@ -46,7 +46,7 @@ class StringLiteralFormatter
                 if (strpos($value, "\n") !== false) {
                     $value = '"""' . $value . '"""';
                 } else {
-                    $value = preg_replace_callback('/[\x00-\x1f\x22\x5c\x7f-\x9f]/u', function(array $matches) {
+                    $value = preg_replace_callback('/[\x00-\x1f\x22\x5c\x7f-\x9f]/u', function (array $matches) {
                         $str = $matches[0];
                         return self::ESCAPE_SEQUENCES[ord($str[0])];
                     }, $value);
@@ -75,7 +75,8 @@ class StringLiteralFormatter
      *
      * @return bool
      */
-    private static function isVariable(string $value): bool {
+    private static function isVariable(string $value): bool
+    {
         return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value);
     }
 

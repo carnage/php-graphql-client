@@ -21,7 +21,7 @@ trait FieldTrait
      */
     public function setSelectionSet(array $selectionSet)
     {
-        $nonStringsFields = array_filter($selectionSet, function($element) {
+        $nonStringsFields = array_filter($selectionSet, function ($element) {
             return !is_string($element) && !$element instanceof Query && !$element instanceof InlineFragment;
         });
         if (!empty($nonStringsFields)) {
@@ -42,12 +42,11 @@ trait FieldTrait
     {
         if (empty($this->selectionSet)) {
             return '';
-	    }
+        }
 
         $attributesString = " {" . PHP_EOL;
         $first            = true;
         foreach ($this->selectionSet as $attribute) {
-
             // Append empty line at the beginning if it's not the first item on the list
             if ($first) {
                 $first = false;

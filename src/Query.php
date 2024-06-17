@@ -133,11 +133,13 @@ class Query extends NestableObject
      */
     public function setVariables(array $variables)
     {
-        $nonVarElements = array_filter($variables, function($e) {
+        $nonVarElements = array_filter($variables, function ($e) {
             return !$e instanceof Variable;
         });
         if (count($nonVarElements) > 0) {
-            throw new InvalidVariableException('At least one of the elements of the variables array provided is not an instance of GraphQL\\Variable');
+            throw new InvalidVariableException(
+                'At least one of the elements of the variables array provided is not an instance of GraphQL\\Variable'
+            );
         }
 
         $this->variables = $variables;
@@ -157,12 +159,13 @@ class Query extends NestableObject
     public function setArguments(array $arguments): Query
     {
         // If one of the arguments does not have a name provided, throw an exception
-        $nonStringArgs = array_filter(array_keys($arguments), function($element) {
+        $nonStringArgs = array_filter(array_keys($arguments), function ($element) {
             return !is_string($element);
         });
         if (!empty($nonStringArgs)) {
             throw new ArgumentException(
-                'One or more of the arguments provided for creating the query does not have a key, which represents argument name'
+                'One or more of the arguments provided for creating the query does not have a key,' .
+                'which represents argument name'
             );
         }
 
@@ -191,7 +194,6 @@ class Query extends NestableObject
         $varsString = '(';
         $first      = true;
         foreach ($this->variables as $variable) {
-
             // Append space at the beginning if it's not the first item on the list
             if ($first) {
                 $first = false;
@@ -221,7 +223,6 @@ class Query extends NestableObject
         $constraintsString = '(';
         $first             = true;
         foreach ($this->arguments as $name => $value) {
-
             // Append space at the beginning if it's not the first item on the list
             if ($first) {
                 $first = false;
@@ -256,7 +257,6 @@ class Query extends NestableObject
         if (!$this->isNested) {
             $queryFormat = $this->generateSignature();
             if ($this->fieldName === '') {
-
                 return $queryFormat . $selectionSetString;
             } else {
                 $queryFormat = $this->generateSignature() . " {" . PHP_EOL . static::QUERY_FORMAT . PHP_EOL . "}";

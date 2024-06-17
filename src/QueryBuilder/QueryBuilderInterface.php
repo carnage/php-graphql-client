@@ -14,5 +14,5 @@ interface QueryBuilderInterface
     /**
      * @return Query
      */
-    function getQuery(): Query;
+    public function getQuery(): Query;
 }

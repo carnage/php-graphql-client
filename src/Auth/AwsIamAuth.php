@@ -37,7 +37,8 @@ class AwsIamAuth implements AuthInterface
             throw new AwsRegionNotSetException();
         }
         return $this->getSignature($region)->signRequest(
-            $request, $this->getCredentials(),
+            $request,
+            $this->getCredentials(),
             self::SERVICE_NAME
         );
     }
