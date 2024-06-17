@@ -1,0 +1,13 @@
+{
+  "additional_checks": [
+    {
+      "name": "PHPStan",
+      "job": {
+        "php": "*",
+        "dependencies": "*",
+        "command": "vendor/bin/phpstan analyse"
+      }
+    }
+  ],
+  "stablePHP": "8.0"
+}
