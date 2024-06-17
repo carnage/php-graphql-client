@@ -2,67 +2,38 @@
 
 namespace GraphQL\QueryBuilder;
 
+use BackedEnum;
 use GraphQL\InlineFragment;
 use GraphQL\Query;
 use GraphQL\RawObject;
 use GraphQL\Variable;
+use Stringable;
 
-/**
- * Class AbstractQueryBuilder
- *
- * @package GraphQL
- */
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
-    /**
-     * @var Query
-     */
-    protected $query;
+    protected Query $query;
 
-    /**
-     * @var array|Variable[]
-     */
-    private $variables;
+    /** @var Variable[] */
+    private array $variables = [];
 
-    /**
-     * @var array
-     */
-    private $selectionSet;
+    /** @var array<string|InlineFragment|Query|QueryBuilderInterface> */
+    private array $selectionSet = [];
 
-    /**
-     * @var array
-     */
-    private $argumentsList;
+    /** @var array<null|scalar|array<mixed>|Stringable|BackedEnum> */
+    private array $argumentsList = [];
 
-    /**
-     * QueryBuilder constructor.
-     *
-     * @param string $queryObject
-     * @param string $alias
-     */
     public function __construct(string $queryObject = '', string $alias = '')
     {
-        $this->query         = new Query($queryObject, $alias);
-        $this->variables     = [];
-        $this->selectionSet  = [];
-        $this->argumentsList = [];
+        $this->query = new Query($queryObject, $alias);
     }
 
-    /**
-     * @param string $alias
-     *
-     * @return $this
-     */
-    public function setAlias(string $alias)
+    public function setAlias(string $alias): self
     {
         $this->query->setAlias($alias);
 
         return $this;
     }
 
-    /**
-     * @return Query
-     */
     public function getQuery(): Query
     {
         // Convert nested query builders to query objects
@@ -79,51 +50,41 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         return $this->query;
     }
 
-    /**
-     * @param string|QueryBuilderInterface|InlineFragment|Query $selectedField
-     *
-     * @return $this
-     */
-    protected function selectField($selectedField)
-    {
-        if (
-            is_string($selectedField)
-            || $selectedField instanceof QueryBuilderInterface
-            || $selectedField instanceof Query
-            || $selectedField instanceof InlineFragment
-        ) {
-            $this->selectionSet[] = $selectedField;
-        }
+    protected function selectField(
+        InlineFragment|Query|QueryBuilderInterface|string $selectedField,
+    ): AbstractQueryBuilder {
+        $this->selectionSet[] = $selectedField;
 
         return $this;
     }
 
     /**
-     * @param $argumentName
-     * @param $argumentValue
-     *
-     * @return $this
+     * @param null|array<mixed>|scalar|BackedEnum|Stringable $value
      */
-    protected function setArgument(string $argumentName, $argumentValue)
-    {
-        if (is_scalar($argumentValue) || is_array($argumentValue) || $argumentValue instanceof RawObject) {
-            $this->argumentsList[$argumentName] = $argumentValue;
+    protected function setArgument(
+        string $name,
+        null|bool|float|int|string|array|Stringable|BackedEnum $value
+    ): self {
+        if (!is_null($value)) {
+            $this->argumentsList[$name] = $value;
         }
 
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @param string $type
-     * @param bool   $isRequired
-     * @param null   $defaultValue
-     *
-     * @return $this
-     */
-    protected function setVariable(string $name, string $type, bool $isRequired = false, $defaultValue = null)
-    {
-        $this->variables[] = new Variable($name, $type, $isRequired, $defaultValue);
+    /** @param null|array<mixed>|scalar|BackedEnum|Stringable $defaultValue */
+    protected function setVariable(
+        string $name,
+        string $type,
+        bool $isRequired = false,
+        null|bool|float|int|string|array|Stringable|BackedEnum $defaultValue = null,
+    ): AbstractQueryBuilder {
+        $this->variables[] = new Variable(
+            $name,
+            $type,
+            $isRequired,
+            $defaultValue
+        );
 
         return $this;
     }

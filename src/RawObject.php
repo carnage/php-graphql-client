@@ -2,33 +2,17 @@
 
 namespace GraphQL;
 
-/**
- * Class RawObject
- *
- * @package GraphQL
- */
-class RawObject
-{
-    /**
-     * @var string
-     */
-    protected $objectString;
+use Stringable;
 
-    /**
-     * JsonObject constructor.
-     *
-     * @param string $objectString
-     */
-    public function __construct(string $objectString)
-    {
-        $this->objectString = $objectString;
+final readonly class RawObject implements Stringable
+{
+    public function __construct(
+        protected string $json
+    ) {
     }
 
-    /**
-     * @return mixed
-     */
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->objectString;
+        return $this->json;
     }
 }

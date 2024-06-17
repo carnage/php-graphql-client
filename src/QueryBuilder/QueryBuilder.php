@@ -2,52 +2,34 @@
 
 namespace GraphQL\QueryBuilder;
 
+use BackedEnum;
+use GraphQL\InlineFragment;
 use GraphQL\Query;
+use Stringable;
 
-/**
- * Class QueryBuilder
- *
- * @package GraphQL
- */
 class QueryBuilder extends AbstractQueryBuilder
 {
-    /**
-     * Changing method visibility to public
-     *
-     * @param Query|QueryBuilder|string $selectedField
-     *
-     * @return $this
-     */
-    public function selectField($selectedField)
-    {
+    public function selectField(
+        InlineFragment|Query|QueryBuilderInterface|string $selectedField,
+    ): AbstractQueryBuilder {
         return parent::selectField($selectedField);
     }
 
-    /**
-     * Changing method visibility to public
-     *
-     * @param string $argumentName
-     * @param        $argumentValue
-     *
-     * @return $this
-     */
-    public function setArgument(string $argumentName, $argumentValue)
-    {
-        return parent::setArgument($argumentName, $argumentValue);
+    /** @param null|scalar|array<mixed>|BackedEnum|Stringable $value */
+    public function setArgument(
+        string $name,
+        null|bool|float|int|string|array|BackedEnum|Stringable $value,
+    ): AbstractQueryBuilder {
+        return parent::setArgument($name, $value);
     }
 
-    /**
-     * Changing method visibility to public
-     *
-     * @param string $name
-     * @param string $type
-     * @param bool   $isRequired
-     * @param null   $defaultValue
-     *
-     * @return $this
-     */
-    public function setVariable(string $name, string $type, bool $isRequired = false, $defaultValue = null)
-    {
+    /** @param null|array<mixed>|scalar|BackedEnum|Stringable $defaultValue */
+    public function setVariable(
+        string $name,
+        string $type,
+        bool $isRequired = false,
+        null|bool|float|int|string|array|Stringable|BackedEnum $defaultValue = null,
+    ): AbstractQueryBuilder {
         return parent::setVariable($name, $type, $isRequired, $defaultValue);
     }
 }
