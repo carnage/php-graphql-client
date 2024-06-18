@@ -5,6 +5,7 @@ Downloads](https://poser.pugx.org/gmostafa/php-graphql-client/downloads)](https:
 [![Latest Stable
 Version](https://poser.pugx.org/gmostafa/php-graphql-client/v/stable)](https://packagist.org/packages/gmostafa/php-graphql-client)
 [![License](https://poser.pugx.org/gmostafa/php-graphql-client/license)](https://packagist.org/packages/gmostafa/php-graphql-client)
+[Based on original work by](https://github.com/mghoneimy/php-graphql-client)
 
 A GraphQL client written in PHP which provides very simple, yet powerful, query
 generator classes that make the process of interacting with a GraphQL server a
@@ -29,7 +30,7 @@ There are 3 primary ways to use this package to generate your GraphQL queries:
 Run the following command to install the package using composer:
 
 ```
-$ composer require gmostafa/php-graphql-client
+$ composer require carnage/php-graphql-client
 ```
 
 # Object-to-Query-Mapper Extension
