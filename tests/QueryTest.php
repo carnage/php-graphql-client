@@ -9,11 +9,10 @@ use GraphQL\InlineFragment;
 use GraphQL\Query;
 use GraphQL\RawObject;
 use GraphQL\Variable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class QueryTest
- */
+#[CoversClass(Query::class)]
 class QueryTest extends TestCase
 {
     /**

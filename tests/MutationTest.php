@@ -3,14 +3,15 @@
 namespace GraphQL\Tests;
 
 use GraphQL\Mutation;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(Mutation::class)]
 class MutationTest extends TestCase
 {
-    /**
-     *
-     */
-    public function testMutationWithoutOperationType()
+    #[Test]
+    public function testMutationWithoutOperationType(): void
     {
         $mutation = new Mutation('createObject');
 
@@ -22,10 +23,8 @@ createObject
         );
     }
 
-    /**
-     *
-     */
-    public function testMutationWithOperationType()
+    #[Test]
+    public function testMutationWithOperationType(): void
     {
         $mutation = new Mutation();
         $mutation
@@ -44,10 +43,8 @@ createObject(name: "TestObject")
         );
     }
 
-    /**
-     *
-     */
-    public function testMutationWithoutSelectedFields()
+    #[Test]
+    public function testMutationWithoutSelectedFields(): void
     {
         $mutation = (new Mutation('createObject'))
             ->setArguments(['name' => 'TestObject', 'type' => 'TestType']);
@@ -58,10 +55,8 @@ createObject(name: "TestObject" type: "TestType")
             (string) $mutation);
     }
 
-    /**
-     * 
-     */
-    public function testMutationWithFields()
+    #[Test]
+    public function testMutationWithFields(): void
     {
         $mutation = (new Mutation('createObject'))
             ->setSelectionSet(
@@ -82,10 +77,8 @@ fieldTwo
         );
     }
 
-    /**
-     *
-     */
-    public function testMutationWithArgumentsAndFields()
+    #[Test]
+    public function testMutationWithArgumentsAndFields(): void
     {
         $mutation = (new Mutation('createObject'))
             ->setSelectionSet(

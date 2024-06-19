@@ -8,6 +8,7 @@ use Aws\Signature\SignatureV4;
 use GraphQL\Exception\AwsRegionNotSetException;
 use GraphQL\Exception\MissingAwsSdkPackageException;
 use GuzzleHttp\Psr7\Request;
+use Psr\Http\Message\RequestInterface;
 
 class AwsIamAuth implements AuthInterface
 {
@@ -26,11 +27,9 @@ class AwsIamAuth implements AuthInterface
     }
 
     /**
-     * @param Request $request
      * @param array $options
-     * @return Request
      */
-    public function run(Request $request, array $options = []): Request
+    public function run(Request $request, array $options = []): RequestInterface
     {
         $region = $options['aws_region'] ?? null;
         if ($region === null) {

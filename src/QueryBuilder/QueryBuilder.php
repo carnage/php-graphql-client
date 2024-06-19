@@ -13,13 +13,10 @@ class QueryBuilder extends AbstractQueryBuilder
 {
     /**
      * Changing method visibility to public
-     *
-     * @param Query|QueryBuilder|string $selectedField
-     *
-     * @return $this
      */
-    public function selectField($selectedField)
-    {
+    public function selectField(
+        Query|QueryBuilder|string $selectedField
+    ): AbstractQueryBuilder {
         return parent::selectField($selectedField);
     }
 
@@ -31,7 +28,7 @@ class QueryBuilder extends AbstractQueryBuilder
      *
      * @return $this
      */
-    public function setArgument(string $argumentName, $argumentValue)
+    public function setArgument(string $argumentName, $argumentValue): AbstractQueryBuilder
     {
         return parent::setArgument($argumentName, $argumentValue);
     }
@@ -46,8 +43,12 @@ class QueryBuilder extends AbstractQueryBuilder
      *
      * @return $this
      */
-    public function setVariable(string $name, string $type, bool $isRequired = false, $defaultValue = null)
-    {
+    public function setVariable(
+        string $name,
+        string $type,
+        bool $isRequired = false,
+        $defaultValue = null
+    ): AbstractQueryBuilder {
         return parent::setVariable($name, $type, $isRequired, $defaultValue);
     }
 }

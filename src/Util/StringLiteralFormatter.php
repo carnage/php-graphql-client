@@ -32,17 +32,10 @@ class StringLiteralFormatter
         '\\u0098', '\\u0099', '\\u009A', '\\u009B', '\\u009C', '\\u009D', '\\u009E', '\\u009F',
     ];
 
-    /**
-     * Converts the value provided to the equivalent RHS value to be put in a file declaration
-     *
-     * @param string|int|float|bool $value
-     *
-     * @return string
-     */
-    public static function formatValueForRHS($value): string
+    public static function formatValueForRHS(string|int|float|bool|null $value): string
     {
         if (is_string($value)) {
-            if (!static::isVariable($value)) {
+            if (!self::isVariable($value)) {
                 if (strpos($value, "\n") !== false) {
                     $value = '"""' . $value . '"""';
                 } else {
@@ -54,11 +47,7 @@ class StringLiteralFormatter
                 }
             }
         } elseif (is_bool($value)) {
-            if ($value) {
-                $value = 'true';
-            } else {
-                $value = 'false';
-            }
+            $value = $value ? 'true' : 'false';
         } elseif ($value === null) {
             $value = 'null';
         } else {
@@ -68,13 +57,6 @@ class StringLiteralFormatter
         return $value;
     }
 
-    /**
-     * Treat string value as variable if it matches variable regex
-     *
-     * @param string $value
-     *
-     * @return bool
-     */
     private static function isVariable(string $value): bool
     {
         return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value);

@@ -2,17 +2,17 @@
 
 namespace GraphQL\Exception;
 
-use RunTimeException;
+use RuntimeException;
 
 /**
  * Class AwsRegionNotSetException
  *
  * @package GraphQL\Exception
  */
-class AwsRegionNotSetException extends RunTimeException
+class AwsRegionNotSetException extends RuntimeException
 {
     public function __construct()
     {
-        parent::__construct("AWS region not set.");
+        parent::__construct('AWS region not set.');
     }
 }

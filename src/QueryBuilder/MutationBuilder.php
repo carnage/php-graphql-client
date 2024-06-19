@@ -26,6 +26,7 @@ class MutationBuilder extends QueryBuilder
      */
     public function getMutation(): Mutation
     {
+        assert($this->getQuery() instanceof Mutation);
         return $this->getQuery();
     }
 }

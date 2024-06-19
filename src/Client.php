@@ -21,53 +21,37 @@ use TypeError;
  */
 class Client
 {
-    /**
-     * @var string
-     */
-    protected $endpointUrl;
+    protected string $endpointUrl;
 
-    /**
-     * @var ClientInterface
-     */
-    protected $httpClient;
+    protected ClientInterface $httpClient;
 
     /**
      * @var array
      */
-    protected $httpHeaders;
+    protected array $httpHeaders;
 
     /**
      * @var array
      */
-    protected $options;
+    protected array $options;
 
-    /**
-     * @var string
-     */
-    protected $requestMethod;
+    protected string $requestMethod;
 
-    /**
-     * @var AuthInterface
-     */
-    protected $auth;
+    protected AuthInterface $auth;
 
     /**
      * Client constructor.
      *
-     * @param string $endpointUrl
      * @param array $authorizationHeaders
      * @param array $httpOptions
-     * @param ClientInterface|null $httpClient
-     * @param string $requestMethod
-     * @param AuthInterface|null $auth
      */
     public function __construct(
         string $endpointUrl,
         array $authorizationHeaders = [],
         array $httpOptions = [],
-        ClientInterface $httpClient = null,
+        ?ClientInterface $httpClient = null,
         string $requestMethod = 'POST',
-        AuthInterface $auth = null
+        ?AuthInterface $auth = null
     ) {
         $headers = array_merge(
             $authorizationHeaders,
@@ -81,7 +65,7 @@ class Client
          */
         unset($httpOptions['headers']);
         $this->options = $httpOptions;
-        if ($auth) {
+        if (!is_null($auth)) {
             $this->auth = $auth;
         }
 
@@ -116,16 +100,14 @@ class Client
     }
 
     /**
-     * @param string $queryString
-     * @param bool   $resultsAsArray
      * @param array  $variables
-     * @param
-     *
-     * @return Results
      * @throws QueryError
      */
-    public function runRawQuery(string $queryString, $resultsAsArray = false, array $variables = []): Results
-    {
+    public function runRawQuery(
+        string $queryString,
+        $resultsAsArray = false,
+        array $variables = []
+    ): Results {
         $request = new Request($this->requestMethod, $this->endpointUrl);
 
         foreach ($this->httpHeaders as $header => $value) {
@@ -140,7 +122,7 @@ class Client
         $bodyArray = ['query' => (string) $queryString, 'variables' => $variables];
         $request = $request->withBody(Utils::streamFor(json_encode($bodyArray)));
 
-        if ($this->auth) {
+        if (isset($this->auth)) {
             $request = $this->auth->run($request, $this->options);
         }
 
