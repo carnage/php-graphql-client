@@ -3,62 +3,39 @@
 namespace GraphQL;
 
 use GraphQL\Util\StringLiteralFormatter;
+use Stringable;
 
-/**
- * Class Variable
- *
- * @package GraphQL
- */
-class Variable
+class Variable implements Stringable
 {
-    /**
-     * @var string
-     */
-    protected $name;
-
-    /**
-     * @var string
-     */
-    protected $type;
-
-    /**
-     * @var bool
-     */
-    protected $required;
-
-    /**
-     * @var null|string|int|float|bool
-     */
-    protected $defaultValue;
-
-    /**
-     * Variable constructor.
-     *
-     * @param string $name
-     * @param string $type
-     * @param bool   $isRequired
-     * @param null   $defaultValue
-     */
-    public function __construct(string $name, string $type, bool $isRequired = false, $defaultValue = null)
-    {
-        $this->name         = $name;
-        $this->type         = $type;
-        $this->required     = $isRequired;
-        $this->defaultValue = $defaultValue;
+    public function __construct(
+        public string $name,
+        public string $type,
+        public bool $required = false,
+        public null|string|int|float|bool $defaultValue = null
+    ) {
     }
 
-    /**
-     * @return string
-     */
     public function __toString(): string
     {
-        $varString = "\$$this->name: $this->type";
+        $varString = fn (string $suffix = ''): string => sprintf(
+            '$%s: %s%s',
+            $this->name,
+            $this->type,
+            $suffix,
+        );
+
         if ($this->required) {
-            $varString .= '!';
-        } elseif (!empty($this->defaultValue)) {
-            $varString .= '=' . StringLiteralFormatter::formatValueForRHS($this->defaultValue);
+            return $varString('!');
         }
 
-        return $varString;
+        if (isset($this->defaultValue)) {
+            $defaultString = sprintf(
+                '=%s',
+                StringLiteralFormatter::formatValueForRHS($this->defaultValue)
+            );
+            return $varString($defaultString);
+        }
+
+        return $varString();
     }
 }
