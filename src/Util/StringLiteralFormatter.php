@@ -2,11 +2,6 @@
 
 namespace GraphQL\Util;
 
-/**
- * Class StringLiteralFormatter
- *
- * @package GraphQL\Util
- */
 class StringLiteralFormatter
 {
     private const ESCAPE_SEQUENCES = [
@@ -32,63 +27,53 @@ class StringLiteralFormatter
         '\\u0098', '\\u0099', '\\u009A', '\\u009B', '\\u009C', '\\u009D', '\\u009E', '\\u009F',
     ];
 
-    public static function formatValueForRHS(string|int|float|bool|null $value): string
+    public static function formatValueForRHS(null|bool|float|int|string $value): string
     {
-        if (is_string($value)) {
-            if (!self::isVariable($value)) {
-                if (strpos($value, "\n") !== false) {
-                    $value = '"""' . $value . '"""';
-                } else {
-                    $value = preg_replace_callback('/[\x00-\x1f\x22\x5c\x7f-\x9f]/u', function (array $matches) {
-                        $str = $matches[0];
-                        return self::ESCAPE_SEQUENCES[ord($str[0])];
-                    }, $value);
-                    $value = "\"$value\"";
-                }
-            }
-        } elseif (is_bool($value)) {
-            $value = $value ? 'true' : 'false';
-        } elseif ($value === null) {
-            $value = 'null';
-        } else {
-            $value = (string) $value;
+        if (is_null($value)) {
+            return 'null';
         }
 
-        return $value;
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_float($value) || is_int($value)) {
+            return (string) $value;
+        }
+
+        if (self::isVariable($value)) {
+            return $value;
+        }
+
+        if (str_contains($value, "\n")) {
+            return sprintf('"""%s"""', $value);
+        }
+
+        $value = preg_replace_callback(
+            '/[\x00-\x1f\x22\x5c\x7f-\x9f]/u',
+            function (array $matches) {
+                $str = $matches[0];
+                return self::ESCAPE_SEQUENCES[ord($str[0])];
+            },
+            $value
+        );
+        return sprintf('"%s"', $value);
     }
 
     private static function isVariable(string $value): bool
     {
-        return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value);
+        return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value) === 1;
     }
 
-    /**
-     * @param array $array
-     *
-     * @return string
-     */
+    /** @param array<null|bool|float|int|string> $array */
     public static function formatArrayForGQLQuery(array $array): string
     {
-        $arrString = '[';
-        $first = true;
-        foreach ($array as $element) {
-            if ($first) {
-                $first = false;
-            } else {
-                $arrString .= ', ';
-            }
-            $arrString .= StringLiteralFormatter::formatValueForRHS($element);
-        }
-        $arrString .= ']';
-
-        return $arrString;
+        return sprintf('[%s]', implode(', ', array_map(
+            fn ($p) => StringLiteralFormatter::formatValueForRHS($p),
+            $array,
+        )));
     }
 
-    /**
-     * @param string $stringValue
-     *
-     * @return string
-     */
     public static function formatUpperCamelCase(string $stringValue): string
     {
         if (strpos($stringValue, '_') === false) {
@@ -98,11 +83,6 @@ class StringLiteralFormatter
         return str_replace('_', '', ucwords($stringValue, '_'));
     }
 
-    /**
-     * @param string $stringValue
-     *
-     * @return string
-     */
     public static function formatLowerCamelCase(string $stringValue): string
     {
         return lcfirst(static::formatUpperCamelCase($stringValue));
