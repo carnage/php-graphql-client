@@ -26,7 +26,7 @@ class StringLiteralFormatterTest extends TestCase
     }
 
     /**
-     * @param array<null|bool|float|int|string> $array
+     * @param array<?scalar> $array
      */
     #[Test]
     #[DataProvider('provideArraysToFormatForGQLQueries')]
@@ -61,7 +61,7 @@ class StringLiteralFormatterTest extends TestCase
         self::assertSame($expected, $actual);
     }
 
-    /** @return Generator<array{0:string, 1:null|bool|float|int|string}> */
+    /** @return Generator<array{0:string, 1:?scalar}> */
     public static function provideValuesToFormatForRHS(): Generator
     {
         yield 'null' => ['null', null];
@@ -115,7 +115,7 @@ class StringLiteralFormatterTest extends TestCase
 
     /** @return Generator<array{
      *      0:string,
-     *      1:array<null|bool|float|int|string>
+     *      1:array<?scalar>
      * }>
      */
     public static function provideArraysToFormatForGQLQueries(): Generator

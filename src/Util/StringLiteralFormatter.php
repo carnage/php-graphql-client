@@ -65,7 +65,7 @@ class StringLiteralFormatter
         return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value) === 1;
     }
 
-    /** @param array<null|bool|float|int|string> $array */
+    /** @param array<?scalar> $array */
     public static function formatArrayForGQLQuery(array $array): string
     {
         return sprintf('[%s]', implode(', ', array_map(
