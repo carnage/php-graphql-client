@@ -5,33 +5,22 @@ namespace GraphQL\Exception;
 use RuntimeException;
 
 /**
- * This exception is triggered when the GraphQL endpoint returns an error in the provided query
- *
- * Class QueryError
- *
- * @package GraphQl\Exception
+ * This exception is triggered when:
+ * - the GraphQL endpoint returns an error in the provided query
  */
 class QueryError extends RuntimeException
 {
-    /**
-     * @var array
-     */
-    protected $errorDetails;
-    /**
-     * @var array
-     */
+    /** @var array */
+    protected array $errorDetails;
+
+    /** @var array */
     protected $data;
-    /**
-     * @var array
-     */
+
+    /** @var array */
     protected $errors;
 
-    /**
-     * QueryError constructor.
-     *
-     * @param array $errorDetails
-     */
-    public function __construct($errorDetails)
+    /** @param array $errorDetails */
+    public function __construct(array $errorDetails)
     {
         $this->errorDetails = $errorDetails['errors'][0];
         $this->data = [];
@@ -45,7 +34,7 @@ class QueryError extends RuntimeException
     /**
      * @return array
      */
-    public function getErrorDetails()
+    public function getErrorDetails(): array
     {
         return $this->errorDetails;
     }
@@ -53,7 +42,7 @@ class QueryError extends RuntimeException
     /**
      * @return array
      */
-    public function getData()
+    public function getData(): array
     {
         return $this->data;
     }
@@ -61,7 +50,7 @@ class QueryError extends RuntimeException
     /**
      * @return array
      */
-    public function getErrors()
+    public function getErrors(): array
     {
         return $this->errors;
     }

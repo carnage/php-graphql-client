@@ -9,20 +9,21 @@ trait FieldTrait
     /**
      * Stores the selection set desired to get from the query, can include nested queries
      *
-     * @var array
+     * @var array<string|array<string>>
      */
-    protected $selectionSet;
+    protected array $selectionSet;
 
     /**
-     * @param array $selectionSet
-     *
-     * @return $this
+     * @param array<string|InlineFragment|Query> $selectionSet
      * @throws InvalidSelectionException
      */
     public function setSelectionSet(array $selectionSet)
     {
         $nonStringsFields = array_filter($selectionSet, function ($element) {
-            return !is_string($element) && !$element instanceof Query && !$element instanceof InlineFragment;
+            return
+                !is_string($element) &&
+                !$element instanceof Query &&
+                !$element instanceof InlineFragment;
         });
         if (!empty($nonStringsFields)) {
             throw new InvalidSelectionException(
@@ -35,9 +36,6 @@ trait FieldTrait
         return $this;
     }
 
-    /**
-     * @return string
-     */
     protected function constructSelectionSet(): string
     {
         if (empty($this->selectionSet)) {

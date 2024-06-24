@@ -74,7 +74,7 @@ field_one
     public function testSetAlias()
     {
         $builder = (new QueryBuilder('Object'))
-            ->setAlias('ObjectAlias');;
+            ->setAlias('ObjectAlias');
         $builder->selectField('field_one');
         $this->assertEquals(
             'query {

@@ -14,20 +14,11 @@ use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Client\ClientInterface;
 use TypeError;
 
-/**
- * Class Client
- *
- * @package GraphQL
- */
 class Client
 {
-    protected string $endpointUrl;
-
     protected ClientInterface $httpClient;
 
-    /**
-     * @var array
-     */
+    /** @var array<string|array<string>> */
     protected array $httpHeaders;
 
     /**
@@ -35,47 +26,38 @@ class Client
      */
     protected array $options;
 
-    protected string $requestMethod;
-
-    protected AuthInterface $auth;
-
     /**
      * Client constructor.
      *
-     * @param array $authorizationHeaders
+     * @param array<string|array<string>> $authorizationHeaders
      * @param array $httpOptions
      */
     public function __construct(
-        string $endpointUrl,
+        protected string $endpointUrl,
         array $authorizationHeaders = [],
         array $httpOptions = [],
         ?ClientInterface $httpClient = null,
-        string $requestMethod = 'POST',
-        ?AuthInterface $auth = null
+        protected string $requestMethod = 'POST',
+        protected ?AuthInterface $auth = null
     ) {
-        $headers = array_merge(
+        $this->httpHeaders = array_merge(
             $authorizationHeaders,
             $httpOptions['headers'] ?? [],
             ['Content-Type' => 'application/json']
         );
-        /**
-         * All headers will be set on the request objects explicitly,
-         * Guzzle doesn't have to care about them at this point, so to avoid any conflicts
-         * we are removing the headers from the options
-         */
-        unset($httpOptions['headers']);
-        $this->options = $httpOptions;
-        if (!is_null($auth)) {
-            $this->auth = $auth;
-        }
 
-        $this->endpointUrl          = $endpointUrl;
-        $this->httpClient           = $httpClient ?? new GuzzleAdapter(new \GuzzleHttp\Client($httpOptions));
-        $this->httpHeaders          = $headers;
+        $this->options = array_filter(
+            $httpOptions,
+            fn($k) => $k !== 'headers',
+            ARRAY_FILTER_USE_KEY,
+        );
+
+        $this->httpClient = $httpClient ??
+            new GuzzleAdapter(new \GuzzleHttp\Client($httpOptions));
+
         if ($requestMethod !== 'POST') {
             throw new MethodNotSupportedException($requestMethod);
         }
-        $this->requestMethod        = $requestMethod;
     }
 
     /**
