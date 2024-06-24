@@ -5,103 +5,71 @@ namespace GraphQL;
 use GraphQL\Exception\QueryError;
 use Psr\Http\Message\ResponseInterface;
 
-/**
- * Class Result
- *
- * @package GraphQl
- */
 class Results
 {
-    /**
-     * @var string
-     */
-    protected $responseBody;
+    protected string $responseBody;
 
-    /**
-     * @var ResponseInterface
-     */
-    protected $responseObject;
-
-    /**
-     * @var array|object
-     */
-    protected $results;
+    /** @var array<?scalar>|object */
+    protected array|object $results;
 
     /**
      * Result constructor.
      *
      * Receives json response from GraphQL api response and parses it as associative array or nested object accordingly
-     *
-     * @param ResponseInterface $response
-     * @param bool              $asArray
-     *
      * @throws QueryError
      */
-    public function __construct(ResponseInterface $response, $asArray = false)
-    {
-        $this->responseObject = $response;
-        $this->responseBody   = (string) $this->responseObject->getBody();
-        $this->results        = json_decode($this->responseBody, $asArray);
+    public function __construct(
+        protected ResponseInterface $response,
+        bool $asArray = false
+    ) {
+        $this->responseBody = (string) $this->response->getBody();
+        $this->results = json_decode($this->responseBody, $asArray);
 
-        // Check if any errors exist, and throw exception if they do
-        if ($asArray) {
-            $containsErrors = array_key_exists('errors', $this->results);
-        } else {
-            $containsErrors = isset($this->results->errors);
-        }
+        $containsErrors = is_array($this->results) ?
+            isset($this->results['errors']) :
+            isset($this->results->errors);
 
         if ($containsErrors) {
-            // Reformat results to an array and use it to initialize exception object
             $this->reformatResults(true);
+            assert(is_array($this->results));
             throw new QueryError($this->results);
         }
     }
 
-    /**
-     * @param bool $asArray
-     */
     public function reformatResults(bool $asArray): void
     {
-        $this->results = json_decode($this->responseBody, (bool) $asArray);
+        $this->results = json_decode($this->responseBody, $asArray);
     }
 
     /**
      * Returns only parsed data objects in the requested format
      *
-     * @return array|object
+     * @return array<?scalar>|object
      */
     public function getData()
     {
-        if (is_array($this->results)) {
-            return $this->results['data'];
-        }
-
-        return $this->results->data;
+        return is_array($this->results) ?
+            $this->results['data'] ?? [] :
+            $this->results->data ?? [];
     }
 
     /**
      * Returns entire parsed results in the requested format
      *
-     * @return array|object
+     * @return array<?scalar>|object
      */
-    public function getResults()
+    public function getResults(): array|object
     {
         return $this->results;
     }
 
-    /**
-     * @return string
-     */
-    public function getResponseBody()
+    public function getResponseBody(): string
     {
         return $this->responseBody;
     }
 
-    /**
-     * @return ResponseInterface
-     */
-    public function getResponseObject()
+    public function getResponseObject(): ResponseInterface
     {
-        return $this->responseObject;
+        return $this->response;
     }
 }
