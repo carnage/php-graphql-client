@@ -24,54 +24,64 @@ class VariableTest extends TestCase
     /** @return Generator<array{0:string, 1:Variable}> */
     public static function provideVariables(): Generator
     {
-        yield 'optional string' => [
-            '$optionalString: String',
-            new Variable('optionalString', 'String'),
+        yield 'nullable string' => [
+            '$nullableString: String',
+            new Variable('nullableString', 'String'),
         ];
 
-        yield 'optional string with default' => [
-            '$optionalString: String="default"',
-            new Variable('optionalString', 'String', false, 'default'),
+        yield 'nullable string with default' => [
+            '$nullableString: String="default"',
+            new Variable('nullableString', 'String', false, 'default'),
         ];
 
-        yield 'required string' => [
-            '$requiredString: String!',
-            new Variable('requiredString', 'String', true),
+        yield 'non-nullable string' => [
+            '$nonNullableString: String!',
+            new Variable('nonNullableString', 'String', true),
         ];
 
-        yield 'required string will ignore default' => [
-            '$requiredString: String!',
-            new Variable('requiredString', 'String', true, 'def'),
+        yield 'non-nullable string with default' => [
+            '$nonNullableString: String!="default"',
+            new Variable('nonNullableString', 'String', true, 'default'),
         ];
 
-        yield 'optional int' => [
-            '$optionalInt: Int',
-            new Variable('optionalInt', 'Int', false),
+        yield 'nullable int' => [
+            '$nullableInt: Int',
+            new Variable('nullableInt', 'Int', false),
         ];
 
-        yield 'optional int with default' => [
-            '$optionalInt: Int=4',
-            new Variable('optionalInt', 'Int', false, 4),
+        yield 'nullable int with default' => [
+            '$nullableInt: Int=4',
+            new Variable('nullableInt', 'Int', false, 4),
         ];
 
-        yield 'optional string with a numeric-string default' => [
-            '$optionalString: String="4"',
-            new Variable('optionalString', 'String', false, '4'),
+        yield 'nullable string with a numeric-string default' => [
+            '$nullableString: String="4"',
+            new Variable('nullableString', 'String', false, '4'),
         ];
 
-        yield 'optional bool with default true' => [
-            '$optionalBool: Boolean=true',
-            new Variable('optionalBool', 'Boolean', false, true),
+        yield 'nullable bool with default true' => [
+            '$nullableBool: Boolean=true',
+            new Variable('nullableBool', 'Boolean', false, true),
         ];
 
-        yield 'optional bool with default false' => [
-            '$optionalBool: Boolean=false',
-            new Variable('optionalBool', 'Boolean', false, false),
+        yield 'nullable bool with default false' => [
+            '$nullableBool: Boolean=false',
+            new Variable('nullableBool', 'Boolean', false, false),
         ];
 
-        yield 'optional string with a bool-string default' => [
-            '$optionalString: String="true"',
-            new Variable('optionalString', 'String', false, 'true'),
+        yield 'nullable string with a bool-string default' => [
+            '$nullableString: String="true"',
+            new Variable('nullableString', 'String', false, 'true'),
+        ];
+
+        yield 'nullable int list' => [
+            '$nullableIntList: [Int]',
+            new Variable('nullableIntList', '[Int]', false, null)
+        ];
+
+        yield 'non-nullable int list, default empty array' => [
+            '$nonNullableIntList: [Int]!=[]',
+            new Variable('nonNullableIntList', '[Int]', true, [])
         ];
     }
 }

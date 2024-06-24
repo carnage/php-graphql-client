@@ -55,9 +55,7 @@ class Query implements Stringable
      * @param string $alias the alias to use for the query if required
      */
     public function __construct(
-        /** Stores the object being queried for */
         protected string $fieldName = '',
-        /** Stores the object alias */
         protected string $alias = ''
     ) {
     }
@@ -147,22 +145,7 @@ class Query implements Stringable
             return '';
         }
 
-        $varsString = '(';
-        $first      = true;
-        foreach ($this->variables as $variable) {
-            // Append space at the beginning if it's not the first item on the list
-            if ($first) {
-                $first = false;
-            } else {
-                $varsString .= ' ';
-            }
-
-            // Append variable string value to the variables string
-            $varsString .= (string) $variable;
-        }
-        $varsString .= ')';
-
-        return $varsString;
+        return sprintf('( %s )', implode(' ', $this->variables));
     }
 
     protected function constructArguments(): string
@@ -187,24 +170,6 @@ class Query implements Stringable
         return sprintf('(%s)', implode(' ', $formattedArguments));
     }
 
-    public function __toString(): string
-    {
-        $queryFormat = static::QUERY_FORMAT;
-        $selectionSetString = $this->constructSelectionSet();
-
-        if (!$this->isNested) {
-            $queryFormat = $this->generateSignature();
-            if ($this->fieldName === '') {
-                return $queryFormat . $selectionSetString;
-            } else {
-                $queryFormat = $this->generateSignature() . " {" . PHP_EOL . static::QUERY_FORMAT . PHP_EOL . "}";
-            }
-        }
-        $argumentsString = $this->constructArguments();
-
-        return sprintf($queryFormat, $this->generateFieldName(), $argumentsString, $selectionSetString);
-    }
-
     protected function generateFieldName(): string
     {
         return empty($this->alias) ? $this->fieldName : sprintf('%s: %s', $this->alias, $this->fieldName);
@@ -217,8 +182,26 @@ class Query implements Stringable
         return sprintf($signatureFormat, static::OPERATION_TYPE, $this->operationName, $this->constructVariables());
     }
 
-    protected function setAsNested(): void
+    public function setAsNested(): void
     {
         $this->isNested = true;
+    }
+
+    public function __toString(): string
+    {
+        $queryFormat = self::QUERY_FORMAT;
+        $selectionSetString = $this->constructSelectionSet();
+
+        if (!$this->isNested) {
+            $queryFormat = $this->generateSignature();
+            if ($this->fieldName === '') {
+                return $queryFormat . $selectionSetString;
+            } else {
+                $queryFormat = $this->generateSignature() . ' { ' . static::QUERY_FORMAT . ' }';
+            }
+        }
+        $argumentsString = $this->constructArguments();
+
+        return sprintf($queryFormat, $this->generateFieldName(), $argumentsString, $selectionSetString);
     }
 }

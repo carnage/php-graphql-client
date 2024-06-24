@@ -10,7 +10,7 @@ class Results
     protected string $responseBody;
 
     /** @var array<?scalar>|object */
-    protected array|object $results;
+    protected null|array|object $results;
 
     /**
      * Result constructor.

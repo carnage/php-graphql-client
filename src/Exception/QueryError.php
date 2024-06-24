@@ -22,12 +22,13 @@ class QueryError extends RuntimeException
     /** @param array $errorDetails */
     public function __construct(array $errorDetails)
     {
+        $this->errors = $errorDetails['errors'];
         $this->errorDetails = $errorDetails['errors'][0];
+
         $this->data = [];
         if (!empty($errorDetails['data'])) {
             $this->data = $errorDetails['data'];
         }
-        $this->errors = $errorDetails['errors'];
         parent::__construct($this->errorDetails['message']);
     }
 

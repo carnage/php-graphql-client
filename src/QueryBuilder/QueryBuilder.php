@@ -25,7 +25,7 @@ class QueryBuilder extends AbstractQueryBuilder
         string $name,
         string $type,
         bool $isRequired = false,
-        null|string|int|float|bool $defaultValue = null,
+        mixed $defaultValue = null,
     ): AbstractQueryBuilder {
         return parent::setVariable($name, $type, $isRequired, $defaultValue);
     }

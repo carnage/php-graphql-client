@@ -76,7 +76,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         string $name,
         string $type,
         bool $isRequired = false,
-        null|string|int|float|bool $defaultValue = null
+        mixed $defaultValue = null
     ): AbstractQueryBuilder {
         $this->variables[] = new Variable(
             $name,

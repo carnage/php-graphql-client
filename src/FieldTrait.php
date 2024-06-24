@@ -42,27 +42,15 @@ trait FieldTrait
             return '';
         }
 
-        $attributesString = " {" . PHP_EOL;
-        $first            = true;
-        foreach ($this->selectionSet as $attribute) {
-            // Append empty line at the beginning if it's not the first item on the list
-            if ($first) {
-                $first = false;
-            } else {
-                $attributesString .= PHP_EOL;
-            }
-
-            // If query is included in attributes set as a nested query
-            if ($attribute instanceof Query) {
-                $attribute->setAsNested();
-            }
-
-            // Append attribute to returned attributes list
-            $attributesString .= $attribute;
-        }
-        $attributesString .= PHP_EOL . "}";
-
-        return $attributesString;
+        return sprintf(' { %s }', implode(' ', array_map(
+            function ($selection) {
+                if ($selection instanceof Query) {
+                    $selection->setAsNested();
+                }
+                return $selection;
+            },
+            $this->selectionSet,
+        )));
     }
 
     public function getSelectionSet()

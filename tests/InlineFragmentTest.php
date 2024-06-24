@@ -23,18 +23,13 @@ class InlineFragmentTest extends TestCase
     public function testConvertToString()
     {
         $fragment = new InlineFragment('Test');
-        $fragment->setSelectionSet(
-            [
-                'field1',
-                'field2',
-            ]
-        );
+        $fragment->setSelectionSet([
+            'field1',
+            'field2',
+        ]);
 
         $this->assertEquals(
-            '... on Test {
-field1
-field2
-}',
+            '... on Test { field1 field2 }',
             (string) $fragment
         );
     }
@@ -73,16 +68,7 @@ field2
         );
 
         $this->assertEquals(
-            '... on Test {
-field1
-field2
-sub_field(first: 5) {
-sub_field3
-... on Nested {
-another_field
-}
-}
-}',
+            '... on Test { field1 field2 sub_field(first: 5) { sub_field3 ... on Nested { another_field } } }',
             (string) $fragment
         );
     }
@@ -103,10 +89,7 @@ another_field
         $queryBuilder->selectField('field2');
 
         $this->assertEquals(
-            '... on Test {
-field1
-field2
-}',
+            '... on Test { field1 field2 }',
             (string) $fragment
         );
     }

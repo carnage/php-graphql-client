@@ -16,9 +16,7 @@ class MutationTest extends TestCase
         $mutation = new Mutation('createObject');
 
         $this->assertEquals(
-            'mutation {
-createObject
-}',
+            'mutation { createObject }',
             (string) $mutation
         );
     }
@@ -36,9 +34,7 @@ createObject
             );
 
         $this->assertEquals(
-            'mutation {
-createObject(name: "TestObject")
-}',
+            'mutation { createObject(name: "TestObject") }',
             (string) $mutation
         );
     }
@@ -49,10 +45,9 @@ createObject(name: "TestObject")
         $mutation = (new Mutation('createObject'))
             ->setArguments(['name' => 'TestObject', 'type' => 'TestType']);
         $this->assertEquals(
-            'mutation {
-createObject(name: "TestObject" type: "TestType")
-}',
-            (string) $mutation);
+            'mutation { createObject(name: "TestObject" type: "TestType") }',
+            (string) $mutation
+        );
     }
 
     #[Test]
@@ -67,12 +62,7 @@ createObject(name: "TestObject" type: "TestType")
             );
 
         $this->assertEquals(
-            'mutation {
-createObject {
-fieldOne
-fieldTwo
-}
-}',
+            'mutation { createObject { fieldOne fieldTwo } }',
             (string) $mutation
         );
     }
@@ -94,12 +84,7 @@ fieldTwo
             );
 
         $this->assertEquals(
-            'mutation {
-createObject(argOne: 1 argTwo: "val") {
-fieldOne
-fieldTwo
-}
-}',
+            'mutation { createObject(argOne: 1 argTwo: "val") { fieldOne fieldTwo } }',
             (string) $mutation
         );
     }
