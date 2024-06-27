@@ -10,16 +10,16 @@ use RuntimeException;
  */
 class QueryError extends RuntimeException
 {
-    /** @var array */
+    /** @var array<mixed> */
     protected array $errorDetails;
 
-    /** @var array */
+    /** @var array<mixed> */
     protected $data;
 
-    /** @var array */
+    /** @var array<mixed> */
     protected $errors;
 
-    /** @param array $errorDetails */
+    /** @param array<mixed> $errorDetails */
     public function __construct(array $errorDetails)
     {
         $this->errors = $errorDetails['errors'];
@@ -33,7 +33,7 @@ class QueryError extends RuntimeException
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function getErrorDetails(): array
     {
@@ -41,7 +41,7 @@ class QueryError extends RuntimeException
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function getData(): array
     {
@@ -49,7 +49,7 @@ class QueryError extends RuntimeException
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function getErrors(): array
     {

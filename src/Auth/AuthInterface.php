@@ -7,6 +7,6 @@ use Psr\Http\Message\RequestInterface;
 
 interface AuthInterface
 {
-    /** @param array $options */
+    /** @param array<mixed> $options */
     public function run(Request $request, array $options = []): RequestInterface;
 }

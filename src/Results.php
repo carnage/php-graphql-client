@@ -58,7 +58,7 @@ class Results
      *
      * @return array<?scalar>|object
      */
-    public function getResults(): array|object
+    public function getResults(): null|array|object
     {
         return $this->results;
     }

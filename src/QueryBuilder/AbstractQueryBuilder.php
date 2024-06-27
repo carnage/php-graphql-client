@@ -2,6 +2,7 @@
 
 namespace GraphQL\QueryBuilder;
 
+use GraphQL\InlineFragment;
 use GraphQL\Query;
 use GraphQL\RawObject;
 use GraphQL\Variable;
@@ -14,7 +15,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     /** @var Variable[] */
     private array $variables = [];
 
-    /** @var array */
+    /** @var array<InlineFragment|Query|string> */
     private array $selectionSet = [];
 
     /** @var array<null|scalar|array<?scalar>|Stringable> */
@@ -34,13 +35,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
 
     public function getQuery(): Query
     {
-        // Convert nested query builders to query objects
-        foreach ($this->selectionSet as $key => $field) {
-            if ($field instanceof QueryBuilderInterface) {
-                $this->selectionSet[$key] = $field->getQuery();
-            }
-        }
-
         $this->query->setVariables($this->variables);
         $this->query->setArguments($this->argumentsList);
         $this->query->setSelectionSet($this->selectionSet);
@@ -49,9 +43,11 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     }
 
     protected function selectField(
-        Query|QueryBuilder|string $selectedField,
-    ): AbstractQueryBuilder {
-        $this->selectionSet[] = $selectedField;
+        InlineFragment|Query|QueryBuilderInterface|string $selection,
+    ): self {
+        $this->selectionSet[] = $selection instanceof QueryBuilderInterface ?
+        $selection->getQuery() :
+        $selection;
 
         return $this;
     }
@@ -60,7 +56,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     protected function setArgument(
         string $argumentName,
         null|bool|float|int|string|array|Stringable $argumentValue
-    ): AbstractQueryBuilder {
+    ): self {
         if (
             is_scalar($argumentValue) ||
             is_array($argumentValue) ||
@@ -77,7 +73,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         string $type,
         bool $isRequired = false,
         mixed $defaultValue = null
-    ): AbstractQueryBuilder {
+    ): self {
         $this->variables[] = new Variable(
             $name,
             $type,

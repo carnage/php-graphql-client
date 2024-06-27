@@ -3,14 +3,14 @@
 namespace GraphQL;
 
 use GraphQL\Exception\ArgumentException;
+use GraphQL\Exception\InvalidSelectionException;
 use GraphQL\Exception\InvalidVariableException;
+use GraphQL\QueryBuilder\QueryBuilderInterface;
 use GraphQL\Util\StringLiteralFormatter;
 use Stringable;
 
 class Query implements Stringable
 {
-    use FieldTrait;
-
     /**
      * The GraphQL query format
      *
@@ -41,11 +41,12 @@ class Query implements Stringable
     protected array $arguments = [];
 
     /**
-     * Private member that's not accessible from outside the class,
-     * used internally to deduce if query is nested or not
+     * Stores the selection set desired to get from the query, can include nested queries
      *
-     * @var bool
+     * @var array<string|InlineFragment|Query>
      */
+    protected array $selectionSet;
+
     protected bool $isNested = false;
 
     /**
@@ -185,6 +186,65 @@ class Query implements Stringable
     public function setAsNested(): void
     {
         $this->isNested = true;
+    }
+
+    /**
+     * @param array<InlineFragment|Query|QueryBuilderInterface|string> $selectionSet
+     * @throws InvalidSelectionException
+     */
+    public function setSelectionSet(array $selectionSet): self
+    {
+        $selectionSet = array_map(
+            fn ($s) => $s instanceof QueryBuilderInterface ?
+                $s->getQuery() :
+                $s,
+            $selectionSet,
+        );
+
+
+        foreach ($selectionSet as $selection) {
+            if (
+                !is_string($selection) &&
+                !$selection instanceof Query &&
+                !$selection instanceof InlineFragment
+            ) {
+                throw new InvalidSelectionException(sprintf(
+                    'Can only set a selection from one of the following: %s',
+                    implode(', ', [
+                        InlineFragment::class,
+                        Query::class,
+                        QueryBuilderInterface::class,
+                        'string',
+                    ]),
+                ));
+            }
+        }
+
+        $this->selectionSet = $selectionSet;
+        return $this;
+    }
+
+    /** @return array<string|InlineFragment|Query> */
+    public function getSelectionSet(): array
+    {
+        return $this->selectionSet;
+    }
+
+    protected function constructSelectionSet(): string
+    {
+        if (empty($this->selectionSet)) {
+            return '';
+        }
+
+        return sprintf(' { %s }', implode(' ', array_map(
+            function ($selection) {
+                if ($selection instanceof Query) {
+                    $selection->setAsNested();
+                }
+                return $selection;
+            },
+            $this->selectionSet,
+        )));
     }
 
     public function __toString(): string

@@ -2,15 +2,16 @@
 
 namespace GraphQL\QueryBuilder;
 
+use GraphQL\InlineFragment;
 use GraphQL\Query;
 use Stringable;
 
 class QueryBuilder extends AbstractQueryBuilder
 {
     public function selectField(
-        Query|QueryBuilder|string $selectedField
+        InlineFragment | Query | QueryBuilderInterface | string $selection
     ): AbstractQueryBuilder {
-        return parent::selectField($selectedField);
+        return parent::selectField($selection);
     }
 
     /** @param null|scalar|array<?scalar>|Stringable $argumentValue */

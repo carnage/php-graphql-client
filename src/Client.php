@@ -3,16 +3,15 @@
 namespace GraphQL;
 
 use GraphQL\Auth\AuthInterface;
-use GraphQL\Auth\HeaderAuth;
 use GraphQL\Exception\QueryError;
 use GraphQL\Exception\MethodNotSupportedException;
 use GraphQL\QueryBuilder\QueryBuilderInterface;
 use GraphQL\Util\GuzzleAdapter;
+use GraphQL\Variable;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Client\ClientInterface;
-use TypeError;
 
 class Client
 {
@@ -22,15 +21,15 @@ class Client
     protected array $httpHeaders;
 
     /**
-     * @var array
+     * @var array<mixed>
      */
     protected array $options;
 
     /**
      * Client constructor.
      *
-     * @param array<string|array<string>> $authorizationHeaders
-     * @param array $httpOptions
+     * @param array<string,string|array<string>> $authorizationHeaders
+     * @param array<string,mixed> $httpOptions
      */
     public function __construct(
         protected string $endpointUrl,
@@ -61,33 +60,28 @@ class Client
     }
 
     /**
-     * @param Query|QueryBuilderInterface $query
-     * @param bool                        $resultsAsArray
-     * @param array                       $variables
-     *
-     * @return Results
+     * @param Variable[] $variables
      * @throws QueryError
      */
-    public function runQuery($query, bool $resultsAsArray = false, array $variables = []): Results
-    {
-        if ($query instanceof QueryBuilderInterface) {
-            $query = $query->getQuery();
-        }
-
-        if (!$query instanceof Query) {
-            throw new TypeError('Client::runQuery accepts the first argument of type Query or QueryBuilderInterface');
-        }
+    public function runQuery(
+        Query|QueryBuilderInterface $query,
+        bool $resultsAsArray = false,
+        array $variables = []
+    ): Results {
+        $query = $query instanceof QueryBuilderInterface ?
+            $query->getQuery() :
+            $query;
 
         return $this->runRawQuery((string) $query, $resultsAsArray, $variables);
     }
 
     /**
-     * @param array  $variables
+     * @param Variable[] $variables
      * @throws QueryError
      */
     public function runRawQuery(
         string $queryString,
-        $resultsAsArray = false,
+        bool $resultsAsArray = false,
         array $variables = []
     ): Results {
         $request = new Request($this->requestMethod, $this->endpointUrl);

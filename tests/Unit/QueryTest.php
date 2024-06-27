@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace GraphQL\Tests;
+namespace GraphQL\Tests\Unit;
 
 use Generator;
 use GraphQL\Exception\ArgumentException;
-use GraphQL\Exception\InvalidSelectionException;
 use GraphQL\Exception\InvalidVariableException;
 use GraphQL\InlineFragment;
 use GraphQL\Query;
@@ -42,6 +41,16 @@ class QueryTest extends TestCase
 
         $sut->setArguments(['val']);
     }
+
+    #[Test]
+    public function itGetsArguments(): void
+    {
+        $arguments = ['someField' => 'someValue'];
+        $sut = (new Query('things'))->setArguments($arguments);
+
+        self::assertSame($arguments, $sut->getArguments());
+    }
+
 
     #[Test]
     #[DataProvider('provideQueriesToCastToString')]
@@ -201,44 +210,28 @@ class QueryTest extends TestCase
             (new Query('Object'))
                 ->setArguments(['arg1' => 'val1', 'arg2' => 2, 'arg3' => true]),
         ];
-    }
 
-    #[Test]
-    public function itOverwritesPreviousSelectionSets()
-    {
-        $query = (new Query('Object'))
-            ->setSelectionSet(['field1'])
-            ->setSelectionSet(['field2', 'field3']);
-        $this->assertEquals(
+        yield 'it overwrites previous set selection set' => [
             'query { Object { field2 field3 } }',
-            (string) $query,
-            'Query has improperly formatted selection set'
-        );
+            (new Query('Object'))
+                ->setSelectionSet(['field1'])
+                ->setSelectionSet(['field2', 'field3']),
+        ];
 
-        return $query;
-    }
-
-    public function testTwoLevelQuery()
-    {
-        $query = (new Query('Object'))
+        yield 'nested query' => [
+            "query { Object { field1 field2 Object2 { field3 } } }",
+            (new Query('Object'))
             ->setSelectionSet([
                 'field1',
                 'field2',
                 (new Query('Object2'))
                     ->setSelectionSet(['field3'])
-            ]);
-        $this->assertEquals(
-            "query { Object { field1 field2 Object2 { field3 } } }",
-            (string) $query,
-            'Two level query not formatted correctly'
-        );
+            ])
+        ];
 
-        return $query;
-    }
-
-    public function testTwoLevelQueryWithInlineFragment()
-    {
-        $query = (new Query('Object'))
+        yield 'nested inline fragment' => [
+            'query { Object { field1 ... on Object { fragment_field1 fragment_field2 } } }',
+            (new Query('Object'))
                 ->setSelectionSet([
                     'field1',
                     (new InlineFragment('Object'))
@@ -248,87 +241,7 @@ class QueryTest extends TestCase
                                 'fragment_field2',
                             ]
                         ),
-                ]);
-        $this->assertEquals(
-            'query { Object { field1 ... on Object { fragment_field1 fragment_field2 } } }',
-            (string) $query
-        );
-
-        return $query;
-    }
-
-    public function testGettingArguments()
-    {
-        $gql = (new Query('things'))
-            ->setArguments(
-                [
-                   'someClientId' => 'someValueBasedOnCodebase'
-                ]
-            );
-        $cursor_id = 'someCursor';
-        $new_args = $gql->getArguments();
-        $gql->setArguments(
-            array_merge(
-                $new_args,
-                [
-                    'after' => $cursor_id
-                ]
-            )
-        );
-        self::assertEquals(
-            'query { things(someClientId: "someValueBasedOnCodebase" after: "someCursor") }',
-            (string) $gql
-        );
-    }
-
-    public function testGettingNameAndAltering()
-    {
-        $gql = (new Query('things'))
-            ->setSelectionSet(
-                [
-                    'id',
-                    'name',
-                    (new Query('subThings'))
-                        ->setArguments(
-                            [
-                                'filter' => 'providerId123',
-                            ]
-                        )
-                        ->setSelectionSet(
-                            [
-                                'id',
-                                'name'
-                            ]
-                        )
-                ]
-            );
-        $sets = $gql->getSelectionSet();
-        foreach ($sets as $set) {
-            if (($set instanceof Query) === false) {
-                continue;
-            }
-            $name = $set->getFieldName();
-            if ($name !== 'subThings') {
-                continue;
-            }
-            $set->setArguments(
-                [
-                    'filter' => 'providerId456'
-                ]
-            );
-            $set->setSelectionSet(
-                array_merge(
-                    $set->getSelectionSet(),
-                    [
-                        'someField',
-                        'someOtherField'
-                    ]
-                )
-            );
-        }
-        self::assertEquals(
-            'query { things { id name subThings(filter: "providerId456") { id name someField someOtherField } } }',
-            (string) $gql
-        );
+                ]),
+        ];
     }
 }

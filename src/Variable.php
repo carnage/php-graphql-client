@@ -2,6 +2,8 @@
 
 namespace GraphQL;
 
+use GraphQL\Util\StringLiteralFormatter;
+
 final readonly class Variable implements \Stringable
 {
     public function __construct(
@@ -12,16 +14,25 @@ final readonly class Variable implements \Stringable
     ) {
     }
 
+    /**
+     * @TODO make the default value conversion more robust.
+     * json_encode would not handle Enum types which should not have quotes around it
+     */
     public function __toString(): string
     {
-        return sprintf(
-            '$%s: %s%s%s',
+        $varString = sprintf(
+            '$%s: %s%s',
             $this->name,
             $this->type,
             $this->nonNullable ? '!' : '',
-            isset($this->defaultValue) ?
-                sprintf('=%s', json_encode($this->defaultValue)) :
-                '',
         );
+
+        if (!isset($this->defaultValue)) {
+            return $varString;
+        }
+
+        return sprintf('%s=%s', $varString, is_array($this->defaultValue) ?
+            StringLiteralFormatter::formatArrayForGQLQuery($this->defaultValue) :
+            StringLiteralFormatter::formatValueForRHS($this->defaultValue));
     }
 }
