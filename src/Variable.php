@@ -6,11 +6,12 @@ use GraphQL\Util\StringLiteralFormatter;
 
 final readonly class Variable implements \Stringable
 {
+    /** @param null|scalar|array<mixed>|RawObject $defaultValue */
     public function __construct(
         public string $name,
         public string $type,
         public bool $nonNullable = false,
-        public mixed $defaultValue = null
+        public null|bool|float|int|string|array|RawObject $defaultValue = null,
     ) {
     }
 

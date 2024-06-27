@@ -2,6 +2,8 @@
 
 namespace GraphQL\Util;
 
+use GraphQL\RawObject;
+
 class StringLiteralFormatter
 {
     private const ESCAPE_SEQUENCES = [
@@ -27,8 +29,9 @@ class StringLiteralFormatter
         '\\u0098', '\\u0099', '\\u009A', '\\u009B', '\\u009C', '\\u009D', '\\u009E', '\\u009F',
     ];
 
-    public static function formatValueForRHS(null|bool|float|int|string $value): string
-    {
+    public static function formatValueForRHS(
+        null|bool|float|int|string|RawObject $value
+    ): string {
         if (is_null($value)) {
             return 'null';
         }
@@ -37,7 +40,11 @@ class StringLiteralFormatter
             return $value ? 'true' : 'false';
         }
 
-        if (is_float($value) || is_int($value)) {
+        if (
+            is_float($value)
+            || is_int($value)
+            || $value instanceof RawObject
+        ) {
             return (string) $value;
         }
 

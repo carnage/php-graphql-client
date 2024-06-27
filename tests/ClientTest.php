@@ -18,11 +18,6 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
-/**
- * Class ClientTest
- *
- * @package GraphQL\Tests
- */
 class ClientTest extends TestCase
 {
     /**

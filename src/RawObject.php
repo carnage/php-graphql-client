@@ -4,15 +4,15 @@ namespace GraphQL;
 
 use Stringable;
 
-class RawObject implements Stringable
+final readonly class RawObject implements Stringable
 {
     public function __construct(
-        protected string $objectString
+        protected string $json
     ) {
     }
 
     public function __toString(): string
     {
-        return $this->objectString;
+        return $this->json;
     }
 }
