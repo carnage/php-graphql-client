@@ -72,6 +72,7 @@ class StringLiteralFormatter
         return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value) === 1;
     }
 
+    //@todo make this recursive to handle nested arrays
     /** @param array<?scalar> $array */
     public static function formatArrayForGQLQuery(array $array): string
     {
@@ -83,7 +84,7 @@ class StringLiteralFormatter
 
     public static function formatUpperCamelCase(string $stringValue): string
     {
-        if (strpos($stringValue, '_') === false) {
+        if (!str_contains($stringValue, '_')) {
             return ucfirst($stringValue);
         }
 
