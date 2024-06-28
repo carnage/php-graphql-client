@@ -32,25 +32,19 @@ class QueryError extends RuntimeException
         parent::__construct($this->errorDetails['message']);
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     public function getErrorDetails(): array
     {
         return $this->errorDetails;
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     public function getData(): array
     {
         return $this->data;
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     public function getErrors(): array
     {
         return $this->errors;
