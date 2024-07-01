@@ -29,22 +29,17 @@
         }
     },
     "require": {
-        "php": "^7.1 || ^8.0",
+        "php": "^8.2",
         "ext-json": "*",
-        "psr/http-message": "^1.0 || ^2.0 ",
+        "psr/http-message": "^2.0 ",
         "psr/http-client": "^1.0",
-        "guzzlehttp/guzzle": "^6.3|^7.0.1"
+        "guzzlehttp/guzzle": "^7.0.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "^7.5|^8.0|^9.0",
-        "codacy/coverage": "^1.4",
-        "aws/aws-sdk-php": "^3.186"
-    },
-    "conflict": {
-        "guzzlehttp/psr7": "< 1.7.0"
-    },
-    "scripts": {
-        "test": "phpunit tests/ --whitelist src/ --coverage-clover build/coverage/xml"
+        "aws/aws-sdk-php": "^3.186",
+        "phpstan/phpstan": "^1.11.4",
+        "squizlabs/php_codesniffer": "3.10.1",
+        "phpunit/phpunit": "^10.5.20"
     },
     "suggest": {
         "aws/aws-sdk-php": "Move this package to require section to use AWS IAM authorization",

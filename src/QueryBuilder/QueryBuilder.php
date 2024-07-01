@@ -2,52 +2,33 @@
 
 namespace GraphQL\QueryBuilder;
 
+use GraphQL\InlineFragment;
 use GraphQL\Query;
+use GraphQL\RawObject;
 
-/**
- * Class QueryBuilder
- *
- * @package GraphQL
- */
 class QueryBuilder extends AbstractQueryBuilder
 {
-    /**
-     * Changing method visibility to public
-     *
-     * @param Query|QueryBuilder|string $selectedField
-     *
-     * @return $this
-     */
-    public function selectField($selectedField)
-    {
-        return parent::selectField($selectedField);
+    public function selectField(
+        InlineFragment | Query | QueryBuilderInterface | string $selection
+    ): AbstractQueryBuilder {
+        return parent::selectField($selection);
     }
 
-    /**
-     * Changing method visibility to public
-     *
-     * @param string $argumentName
-     * @param        $argumentValue
-     *
-     * @return $this
-     */
-    public function setArgument(string $argumentName, $argumentValue)
-    {
+    /** @param null|scalar|array<?scalar>|RawObject $argumentValue */
+    public function setArgument(
+        string $argumentName,
+        null|bool|float|int|string|array|RawObject $argumentValue,
+    ): AbstractQueryBuilder {
         return parent::setArgument($argumentName, $argumentValue);
     }
 
-    /**
-     * Changing method visibility to public
-     *
-     * @param string $name
-     * @param string $type
-     * @param bool   $isRequired
-     * @param null   $defaultValue
-     *
-     * @return $this
-     */
-    public function setVariable(string $name, string $type, bool $isRequired = false, $defaultValue = null)
-    {
+    /** @param null|scalar|array<?scalar>|RawObject $defaultValue */
+    public function setVariable(
+        string $name,
+        string $type,
+        bool $isRequired = false,
+        null|bool|float|int|string|array|RawObject $defaultValue = null,
+    ): AbstractQueryBuilder {
         return parent::setVariable($name, $type, $isRequired, $defaultValue);
     }
 }

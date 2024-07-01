@@ -18,11 +18,6 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
-/**
- * Class ClientTest
- *
- * @package GraphQL\Tests
- */
 class ClientTest extends TestCase
 {
     /**
@@ -72,7 +67,7 @@ class ClientTest extends TestCase
         $client->runRawQuery('query_string');
 
         $client = new Client('', [], ['handler' => $handler]);
-        $client->runRawQuery('query_string',  false, ['name' => 'val']);
+        $client->runRawQuery('query_string', false, ['name' => 'val']);
 
         $client = new Client('', ['Authorization' => 'Basic xyz'], ['handler' => $handler, 'headers' => [ 'Authorization' => 'Basic zyx', 'User-Agent' => 'test' ]]);
         $client->runRawQuery('query_string');
@@ -206,8 +201,10 @@ class ClientTest extends TestCase
      */
     public function testInvalidQueryResponseWith400()
     {
-        $this->mockHandler->append(new ClientException('', new Request('post', ''),
-                new Response(400, [], json_encode([
+        $this->mockHandler->append(new ClientException(
+            '',
+            new Request('post', ''),
+            new Response(400, [], json_encode([
                 'errors' => [
                     [
                         'message' => 'some syntax error',
@@ -219,7 +216,8 @@ class ClientTest extends TestCase
                         ],
                     ]
                 ]
-        ]))));
+            ]))
+        ));
 
         $this->expectException(QueryError::class);
         $this->client->runRawQuery('');
@@ -230,8 +228,10 @@ class ClientTest extends TestCase
      */
     public function testUnauthorizedResponse()
     {
-        $this->mockHandler->append(new ClientException('', new Request('post', ''),
-                new Response(401, [], json_encode('Unauthorized'))
+        $this->mockHandler->append(new ClientException(
+            '',
+            new Request('post', ''),
+            new Response(401, [], json_encode('Unauthorized'))
         ));
 
         $this->expectException(ClientException::class);

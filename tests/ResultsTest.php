@@ -7,42 +7,25 @@ use GraphQL\Results;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-/**
- * Class ResultsTest
- *
- * @package GraphQL\Tests
- */
+#[CoversClass(Results::class)]
 class ResultsTest extends TestCase
 {
-    /**
-     * @var Client
-     */
-    protected $client;
+    protected Client $client;
 
-    /**
-     * @var MockHandler
-     */
-    protected $mockHandler;
+    protected MockHandler $mockHandler;
 
-    /**
-     *
-     */
     protected function setUp(): void
     {
         $this->mockHandler = new MockHandler();
         $this->client      = new Client(['handler' => $this->mockHandler]);
     }
 
-    /**
-     * @covers \GraphQL\Results::__construct
-     * @covers \GraphQL\Results::getResponseObject
-     * @covers \GraphQL\Results::getResponseBody
-     * @covers \GraphQL\Results::getResults
-     * @covers \GraphQL\Results::getData
-     */
+    #[Test]
     public function testGetSuccessResponseAsObject()
     {
         $body = json_encode([
@@ -83,13 +66,7 @@ class ResultsTest extends TestCase
         );
     }
 
-    /**
-     * @covers \GraphQL\Results::__construct
-     * @covers \GraphQL\Results::getResponseObject
-     * @covers \GraphQL\Results::getResponseBody
-     * @covers \GraphQL\Results::getResults
-     * @covers \GraphQL\Results::getData
-     */
+    #[Test]
     public function testGetSuccessResponseAsArray()
     {
         $body = json_encode([
@@ -142,10 +119,8 @@ class ResultsTest extends TestCase
         );
     }
 
-    /**
-     * @covers \GraphQL\Results::__construct
-     */
-    public function testGetQueryInvalidSyntaxError()
+    #[Test]
+    public function itThrowsExceptionIfItContainsErrors()
     {
         $body = json_encode([
             'errors' => [
@@ -168,14 +143,7 @@ class ResultsTest extends TestCase
         new Results($response);
     }
 
-    /**
-     * @covers \GraphQL\Results::__construct
-     * @covers \GraphQL\Results::reformatResults
-     * @covers \GraphQL\Results::getResponseObject
-     * @covers \GraphQL\Results::getResponseBody
-     * @covers \GraphQL\Results::getResults
-     * @covers \GraphQL\Results::getData
-     */
+    #[Test]
     public function testReformatResultsFromObjectToArray()
     {
         $body = json_encode([
@@ -227,14 +195,7 @@ class ResultsTest extends TestCase
         );
     }
 
-    /**
-     * @covers \GraphQL\Results::__construct
-     * @covers \GraphQL\Results::reformatResults
-     * @covers \GraphQL\Results::getResponseObject
-     * @covers \GraphQL\Results::getResponseBody
-     * @covers \GraphQL\Results::getResults
-     * @covers \GraphQL\Results::getData
-     */
+    #[Test]
     public function testReformatResultsFromArrayToObject()
     {
         $body = json_encode([
