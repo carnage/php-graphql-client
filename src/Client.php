@@ -60,7 +60,7 @@ class Client
     }
 
     /**
-     * @param Variable[] $variables
+     * @param array<string,string> $variables
      * @throws QueryError
      */
     public function runQuery(
@@ -76,7 +76,7 @@ class Client
     }
 
     /**
-     * @param Variable[] $variables
+     * @param array<string,string> $variables
      * @throws QueryError
      */
     public function runRawQuery(
