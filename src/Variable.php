@@ -4,61 +4,36 @@ namespace GraphQL;
 
 use GraphQL\Util\StringLiteralFormatter;
 
-/**
- * Class Variable
- *
- * @package GraphQL
- */
-class Variable
+final readonly class Variable implements \Stringable
 {
-    /**
-     * @var string
-     */
-    protected $name;
-
-    /**
-     * @var string
-     */
-    protected $type;
-
-    /**
-     * @var bool
-     */
-    protected $required;
-
-    /**
-     * @var null|string|int|float|bool
-     */
-    protected $defaultValue;
-
-    /**
-     * Variable constructor.
-     *
-     * @param string $name
-     * @param string $type
-     * @param bool   $isRequired
-     * @param null   $defaultValue
-     */
-    public function __construct(string $name, string $type, bool $isRequired = false, $defaultValue = null)
-    {
-        $this->name         = $name;
-        $this->type         = $type;
-        $this->required     = $isRequired;
-        $this->defaultValue = $defaultValue;
+    /** @param null|scalar|array<mixed>|RawObject $defaultValue */
+    public function __construct(
+        public string $name,
+        public string $type,
+        public bool $nonNullable = false,
+        public null|bool|float|int|string|array|RawObject $defaultValue = null,
+    ) {
     }
 
     /**
-     * @return string
+     * @TODO make the default value conversion more robust.
+     * json_encode would not handle Enum types which should not have quotes around it
      */
     public function __toString(): string
     {
-        $varString = "\$$this->name: $this->type";
-        if ($this->required) {
-            $varString .= '!';
-        } elseif (!empty($this->defaultValue)) {
-            $varString .= '=' . StringLiteralFormatter::formatValueForRHS($this->defaultValue);
+        $varString = sprintf(
+            '$%s: %s%s',
+            $this->name,
+            $this->type,
+            $this->nonNullable ? '!' : '',
+        );
+
+        if (!isset($this->defaultValue)) {
+            return $varString;
         }
 
-        return $varString;
+        return sprintf('%s=%s', $varString, is_array($this->defaultValue) ?
+            StringLiteralFormatter::formatArrayForGQLQuery($this->defaultValue) :
+            StringLiteralFormatter::formatValueForRHS($this->defaultValue));
     }
 }

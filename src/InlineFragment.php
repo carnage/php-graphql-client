@@ -2,65 +2,93 @@
 
 namespace GraphQL;
 
+use GraphQL\Exception\InvalidSelectionException;
 use GraphQL\QueryBuilder\QueryBuilderInterface;
+use Stringable;
 
-/**
- * Class InlineFragment
- *
- * @package GraphQL
- */
-class InlineFragment extends NestableObject
+class InlineFragment implements Stringable
 {
-    use FieldTrait;
-
-    /**
-     * Stores the format for the inline fragment format
-     *
-     * @var string
-     */
     protected const FORMAT = '... on %s%s';
 
-    /**
-     * @var string
-     */
-    protected $typeName;
-
-    /**
-     * @var QueryBuilderInterface|null
-     */
-    protected $queryBuilder;
-
-    /**
-     * InlineFragment constructor.
+     /**
+     * Stores the selection set desired to get from the query, can include nested queries
      *
-     * @param string $typeName
-     * @param QueryBuilderInterface|null $queryBuilder
+     * @var array<string|InlineFragment|Query>
      */
-    public function __construct(string $typeName, ?QueryBuilderInterface $queryBuilder = null)
-    {
-        $this->typeName = $typeName;
-        $this->queryBuilder = $queryBuilder;
+    protected array $selectionSet;
+
+    public function __construct(
+        protected string $typeName,
+        protected ?QueryBuilderInterface $queryBuilder = null,
+    ) {
     }
 
     /**
-     *
+     * @param array<InlineFragment|Query|QueryBuilderInterface|string> $selectionSet
+     * @throws InvalidSelectionException
      */
-    public function __toString()
+    public function setSelectionSet(array $selectionSet): self
+    {
+        $selectionSet = array_map(
+            fn ($s) => $s instanceof QueryBuilderInterface ?
+                $s->getQuery() :
+                $s,
+            $selectionSet,
+        );
+
+
+        foreach ($selectionSet as $selection) {
+            if (
+                !is_string($selection) &&
+                !$selection instanceof Query &&
+                !$selection instanceof InlineFragment
+            ) {
+                throw new InvalidSelectionException(sprintf(
+                    'Can only set a selection from one of the following: %s',
+                    implode(', ', [
+                        InlineFragment::class,
+                        Query::class,
+                        QueryBuilderInterface::class,
+                        'string',
+                    ]),
+                ));
+            }
+        }
+
+
+        $this->selectionSet = $selectionSet;
+        return $this;
+    }
+
+    protected function constructSelectionSet(): string
+    {
+        if (empty($this->selectionSet)) {
+            return '';
+        }
+
+        return sprintf(' { %s }', implode(' ', array_map(
+            function ($selection) {
+                if ($selection instanceof Query) {
+                    $selection->setAsNested();
+                }
+                return $selection;
+            },
+            $this->selectionSet,
+        )));
+    }
+
+    /** @return array<string|InlineFragment|Query> */
+    public function getSelectionSet(): array
+    {
+        return $this->selectionSet;
+    }
+
+    public function __toString(): string
     {
         if ($this->queryBuilder !== null) {
             $this->setSelectionSet($this->queryBuilder->getQuery()->getSelectionSet());
         }
 
         return sprintf(static::FORMAT, $this->typeName, $this->constructSelectionSet());
-    }
-
-    /**
-     * @codeCoverageIgnore
-     *
-     * @return mixed|void
-     */
-    protected function setAsNested()
-    {
-        // TODO: Remove this method, it's purely tech debt
     }
 }

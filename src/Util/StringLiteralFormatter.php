@@ -2,14 +2,11 @@
 
 namespace GraphQL\Util;
 
-/**
- * Class StringLiteralFormatter
- *
- * @package GraphQL\Util
- */
+use GraphQL\RawObject;
+
 class StringLiteralFormatter
 {
-    const ESCAPE_SEQUENCES = [
+    private const ESCAPE_SEQUENCES = [
         '\\u0000', '\\u0001', '\\u0002', '\\u0003', '\\u0004', '\\u0005', '\\u0006', '\\u0007',
         '\\b',     '\\t',     '\\n',     '\\u000B', '\\f',     '\\r',     '\\u000E', '\\u000F',
         '\\u0010', '\\u0011', '\\u0012', '\\u0013', '\\u0014', '\\u0015', '\\u0016', '\\u0017',
@@ -32,94 +29,68 @@ class StringLiteralFormatter
         '\\u0098', '\\u0099', '\\u009A', '\\u009B', '\\u009C', '\\u009D', '\\u009E', '\\u009F',
     ];
 
-    /**
-     * Converts the value provided to the equivalent RHS value to be put in a file declaration
-     *
-     * @param string|int|float|bool $value
-     *
-     * @return string
-     */
-    public static function formatValueForRHS($value): string
-    {
-        if (is_string($value)) {
-            if (!static::isVariable($value)) {
-                if (strpos($value, "\n") !== false) {
-                    $value = '"""' . $value . '"""';
-                } else {
-                    $value = preg_replace_callback('/[\x00-\x1f\x22\x5c\x7f-\x9f]/u', function(array $matches) {
-                        $str = $matches[0];
-                        return self::ESCAPE_SEQUENCES[ord($str[0])];
-                    }, $value);
-                    $value = "\"$value\"";
-                }
-            }
-        } elseif (is_bool($value)) {
-            if ($value) {
-                $value = 'true';
-            } else {
-                $value = 'false';
-            }
-        } elseif ($value === null) {
-            $value = 'null';
-        } else {
-            $value = (string) $value;
+    public static function formatValueForRHS(
+        null|bool|float|int|string|RawObject $value
+    ): string {
+        if (is_null($value)) {
+            return 'null';
         }
 
-        return $value;
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (
+            is_float($value)
+            || is_int($value)
+            || $value instanceof RawObject
+        ) {
+            return (string) $value;
+        }
+
+        if (self::isVariable($value)) {
+            return $value;
+        }
+
+        if (str_contains($value, "\n")) {
+            return sprintf('"""%s"""', $value);
+        }
+
+        $value = preg_replace_callback(
+            '/[\x00-\x1f\x22\x5c\x7f-\x9f]/u',
+            function (array $matches) {
+                $str = $matches[0];
+                return self::ESCAPE_SEQUENCES[ord($str[0])];
+            },
+            $value
+        );
+        return sprintf('"%s"', $value);
     }
 
-    /**
-     * Treat string value as variable if it matches variable regex
-     *
-     * @param string $value
-     *
-     * @return bool
-     */
-    private static function isVariable(string $value): bool {
-        return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value);
+    private static function isVariable(string $value): bool
+    {
+        return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value) === 1;
     }
 
-    /**
-     * @param array $array
-     *
-     * @return string
-     */
+    //@todo make this recursive to handle nested arrays
+    /** @param array<?scalar> $array */
     public static function formatArrayForGQLQuery(array $array): string
     {
-        $arrString = '[';
-        $first = true;
-        foreach ($array as $element) {
-            if ($first) {
-                $first = false;
-            } else {
-                $arrString .= ', ';
-            }
-            $arrString .= StringLiteralFormatter::formatValueForRHS($element);
-        }
-        $arrString .= ']';
-
-        return $arrString;
+        return sprintf('[%s]', implode(', ', array_map(
+            fn ($p) => StringLiteralFormatter::formatValueForRHS($p),
+            $array,
+        )));
     }
 
-    /**
-     * @param string $stringValue
-     *
-     * @return string
-     */
     public static function formatUpperCamelCase(string $stringValue): string
     {
-        if (strpos($stringValue, '_') === false) {
+        if (!str_contains($stringValue, '_')) {
             return ucfirst($stringValue);
         }
 
         return str_replace('_', '', ucwords($stringValue, '_'));
     }
 
-    /**
-     * @param string $stringValue
-     *
-     * @return string
-     */
     public static function formatLowerCamelCase(string $stringValue): string
     {
         return lcfirst(static::formatUpperCamelCase($stringValue));
