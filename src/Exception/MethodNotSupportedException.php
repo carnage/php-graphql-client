@@ -2,16 +2,16 @@
 
 namespace GraphQL\Exception;
 
-use RuntimeException;
+use RunTimeException;
 
 /**
  * Class MethodNotSupportedException
  *
  * @package GraphQL\Exception
  */
-class MethodNotSupportedException extends RuntimeException
+class MethodNotSupportedException extends RunTimeException
 {
-    public function __construct(string $requestMethod)
+    public function __construct($requestMethod)
     {
         parent::__construct("Method \"$requestMethod\" is currently unsupported by client.");
     }

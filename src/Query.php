@@ -3,77 +3,121 @@
 namespace GraphQL;
 
 use GraphQL\Exception\ArgumentException;
-use GraphQL\Exception\InvalidSelectionException;
 use GraphQL\Exception\InvalidVariableException;
-use GraphQL\QueryBuilder\QueryBuilderInterface;
 use GraphQL\Util\StringLiteralFormatter;
-use Stringable;
 
-class Query implements Stringable
+/**
+ * Class Query
+ *
+ * @package GraphQL
+ */
+class Query extends NestableObject
 {
+    use FieldTrait;
+
     /**
-     * The GraphQL query format
+     * Stores the GraphQL query format
      *
      * First string is object name
      * Second string is arguments
      * Third string is selection set
+     *
+     * @var string
      */
-    protected const QUERY_FORMAT = '%s%s%s';
+    protected const QUERY_FORMAT = "%s%s%s";
 
-    /** The type of the operation to be executed on the GraphQL server */
+    /**
+     * Stores the name of the type of the operation to be executed on the GraphQL server
+     *
+     * @var string
+     */
     protected const OPERATION_TYPE = 'query';
 
-    /** The name of the operation to be run on the server */
-    protected string $operationName = '';
+    /**
+     * Stores the name of the operation to be run on the server
+     *
+     * @var string
+     */
+    protected $operationName;
 
     /**
-     * The list of variables to be used in the query
+     * Stores the object being queried for
      *
-     * @var Variable[]
+     * @var string
      */
-    protected array $variables;
+    protected $fieldName;
 
     /**
-     * The list of arguments used when querying data
+     * Stores the object alias
      *
-     * @var array<null|scalar|array<?scalar>|Stringable>
+     * @var string
      */
-    protected array $arguments = [];
+    protected $alias;
 
     /**
-     * Stores the selection set desired to get from the query, can include nested queries
+     * Stores the list of variables to be used in the query
      *
-     * @var array<string|InlineFragment|Query>
+     * @var array|Variable[]
      */
-    protected array $selectionSet;
+    protected $variables;
 
-    protected bool $isNested = false;
+    /**
+     * Stores the list of arguments used when querying data
+     *
+     * @var array
+     */
+    protected $arguments;
+
+    /**
+     * Private member that's not accessible from outside the class, used internally to deduce if query is nested or not
+     *
+     * @var bool
+     */
+    protected $isNested;
 
     /**
      * GQLQueryBuilder constructor.
      *
-     * @param string $fieldName if no value is provided,  empty query object is assumed
+     * @param string $fieldName if no value is provided for the field name an empty query object is assumed
      * @param string $alias the alias to use for the query if required
      */
-    public function __construct(
-        protected string $fieldName = '',
-        protected string $alias = ''
-    ) {
+    public function __construct(string $fieldName = '', string $alias = '')
+    {
+        $this->fieldName     = $fieldName;
+        $this->alias         = $alias;
+        $this->operationName = '';
+        $this->variables     = [];
+        $this->arguments     = [];
+        $this->selectionSet  = [];
+        $this->isNested      = false;
     }
 
+    /**
+     * @return string
+     */
     public function getFieldName(): string
     {
         return $this->fieldName;
     }
 
-    public function setAlias(string $alias): Query
+    /**
+     * @param string $alias
+     *
+     * @return Query
+     */
+    public function setAlias(string $alias)
     {
         $this->alias = $alias;
 
         return $this;
     }
 
-    public function setOperationName(string $operationName): Query
+    /**
+     * @param string $operationName
+     *
+     * @return Query
+     */
+    public function setOperationName(string $operationName)
     {
         if (!empty($operationName)) {
             $this->operationName = " $operationName";
@@ -82,15 +126,18 @@ class Query implements Stringable
         return $this;
     }
 
-    /** @param Variable[] $variables */
-    public function setVariables(array $variables): Query
+    /**
+     * @param array $variables
+     *
+     * @return Query
+     */
+    public function setVariables(array $variables)
     {
-        foreach ($variables as $variable) {
-            if (!$variable instanceof Variable) {
-                throw new InvalidVariableException(
-                    'All variables must be an instance of GraphQL\\Variable'
-                );
-            }
+        $nonVarElements = array_filter($variables, function($e) {
+            return !$e instanceof Variable;
+        });
+        if (count($nonVarElements) > 0) {
+            throw new InvalidVariableException('At least one of the elements of the variables array provided is not an instance of GraphQL\\Variable');
         }
 
         $this->variables = $variables;
@@ -99,34 +146,24 @@ class Query implements Stringable
     }
 
     /**
-     * @param array<null|scalar|array<?scalar>|Stringable> $arguments
-     * @throws ArgumentException for invalid arguments
+     * Throwing exception when setting the arguments if they are incorrect because we can't throw an exception during
+     * the execution of __ToString(), it's a fatal error in PHP
+     *
+     * @param array $arguments
+     *
+     * @return Query
+     * @throws ArgumentException
      */
     public function setArguments(array $arguments): Query
     {
-        foreach ($arguments as $name => $argument) {
-            if (!is_string($name)) {
-                throw new ArgumentException(
-                    'All query arguments require string keys,' .
-                    'these represent the argument name'
-                );
-            }
-
-            if (is_array($argument)) {
-                foreach ($argument as $item) {
-                    if (!is_null($item) && !is_scalar($item)) {
-                        throw new ArgumentException(
-                            'Only arrays with null|scalar items can be handled',
-                        );
-                    }
-                }
-            }
-
-            if (is_object($argument) && !method_exists($argument, '__toString')) {
-                throw new ArgumentException(
-                    'Only objects with the __toString() method can be handled',
-                );
-            }
+        // If one of the arguments does not have a name provided, throw an exception
+        $nonStringArgs = array_filter(array_keys($arguments), function($element) {
+            return !is_string($element);
+        });
+        if (!empty($nonStringArgs)) {
+            throw new ArgumentException(
+                'One or more of the arguments provided for creating the query does not have a key, which represents argument name'
+            );
         }
 
         $this->arguments = $arguments;
@@ -134,48 +171,113 @@ class Query implements Stringable
         return $this;
     }
 
-    /** @return array<null|scalar|array<?scalar>|Stringable> */
+    /**
+     * @return array
+     */
     public function getArguments(): array
     {
         return $this->arguments;
     }
 
+    /**
+     * @return string
+     */
     protected function constructVariables(): string
     {
         if (empty($this->variables)) {
             return '';
         }
 
-        return sprintf('( %s )', implode(' ', $this->variables));
+        $varsString = '(';
+        $first      = true;
+        foreach ($this->variables as $variable) {
+
+            // Append space at the beginning if it's not the first item on the list
+            if ($first) {
+                $first = false;
+            } else {
+                $varsString .= ' ';
+            }
+
+            // Append variable string value to the variables string
+            $varsString .= (string) $variable;
+        }
+        $varsString .= ')';
+
+        return $varsString;
     }
 
+    /**
+     * @return string
+     */
     protected function constructArguments(): string
     {
+        // Return empty string if list is empty
         if (empty($this->arguments)) {
             return '';
         }
 
-        $formattedArguments = [];
-        foreach ($this->arguments as $name => $argument) {
-            if (is_scalar($argument) || is_null($argument)) {
-                $formattedArgument = StringLiteralFormatter::formatValueForRHS($argument);
-            } elseif (is_array($argument)) {
-                $formattedArgument = StringLiteralFormatter::formatArrayForGQLQuery($argument);
+        // Construct arguments string if list not empty
+        $constraintsString = '(';
+        $first             = true;
+        foreach ($this->arguments as $name => $value) {
+
+            // Append space at the beginning if it's not the first item on the list
+            if ($first) {
+                $first = false;
             } else {
-                $formattedArgument = (string) $argument;
+                $constraintsString .= ' ';
             }
 
-            $formattedArguments[] = sprintf('%s: %s', $name, $formattedArgument);
+            // Convert argument values to graphql string literal equivalent
+            if (is_scalar($value) || $value === null) {
+                // Convert scalar value to its literal in graphql
+                $value = StringLiteralFormatter::formatValueForRHS($value);
+            } elseif (is_array($value)) {
+                // Convert PHP array to its array representation in graphql arguments
+                $value = StringLiteralFormatter::formatArrayForGQLQuery($value);
+            }
+            // TODO: Handle cases where a non-string-convertible object is added to the arguments
+            $constraintsString .= $name . ': ' . $value;
         }
+        $constraintsString .= ')';
 
-        return sprintf('(%s)', implode(' ', $formattedArguments));
+        return $constraintsString;
     }
 
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $queryFormat = static::QUERY_FORMAT;
+        $selectionSetString = $this->constructSelectionSet();
+
+        if (!$this->isNested) {
+            $queryFormat = $this->generateSignature();
+            if ($this->fieldName === '') {
+
+                return $queryFormat . $selectionSetString;
+            } else {
+                $queryFormat = $this->generateSignature() . " {" . PHP_EOL . static::QUERY_FORMAT . PHP_EOL . "}";
+            }
+        }
+        $argumentsString = $this->constructArguments();
+
+        return sprintf($queryFormat, $this->generateFieldName(), $argumentsString, $selectionSetString);
+    }
+
+    /**
+     * @return string
+     */
     protected function generateFieldName(): string
     {
         return empty($this->alias) ? $this->fieldName : sprintf('%s: %s', $this->alias, $this->fieldName);
     }
 
+    /**
+     * @return string
+     */
     protected function generateSignature(): string
     {
         $signatureFormat = '%s%s%s';
@@ -183,85 +285,11 @@ class Query implements Stringable
         return sprintf($signatureFormat, static::OPERATION_TYPE, $this->operationName, $this->constructVariables());
     }
 
-    public function setAsNested(): void
+    /**
+     *
+     */
+    protected function setAsNested()
     {
         $this->isNested = true;
-    }
-
-    /**
-     * @param array<InlineFragment|Query|QueryBuilderInterface|string> $selectionSet
-     * @throws InvalidSelectionException
-     */
-    public function setSelectionSet(array $selectionSet): self
-    {
-        $selectionSet = array_map(
-            fn ($s) => $s instanceof QueryBuilderInterface ?
-                $s->getQuery() :
-                $s,
-            $selectionSet,
-        );
-
-
-        foreach ($selectionSet as $selection) {
-            if (
-                !is_string($selection) &&
-                !$selection instanceof Query &&
-                !$selection instanceof InlineFragment
-            ) {
-                throw new InvalidSelectionException(sprintf(
-                    'Can only set a selection from one of the following: %s',
-                    implode(', ', [
-                        InlineFragment::class,
-                        Query::class,
-                        QueryBuilderInterface::class,
-                        'string',
-                    ]),
-                ));
-            }
-        }
-
-        $this->selectionSet = $selectionSet;
-        return $this;
-    }
-
-    /** @return array<string|InlineFragment|Query> */
-    public function getSelectionSet(): array
-    {
-        return $this->selectionSet;
-    }
-
-    protected function constructSelectionSet(): string
-    {
-        if (empty($this->selectionSet)) {
-            return '';
-        }
-
-        return sprintf(' { %s }', implode(' ', array_map(
-            function ($selection) {
-                if ($selection instanceof Query) {
-                    $selection->setAsNested();
-                }
-                return $selection;
-            },
-            $this->selectionSet,
-        )));
-    }
-
-    public function __toString(): string
-    {
-        $queryFormat = self::QUERY_FORMAT;
-        $selectionSetString = $this->constructSelectionSet();
-
-        if (!$this->isNested) {
-            $queryFormat = $this->generateSignature();
-            if ($this->fieldName === '') {
-                return $queryFormat . $selectionSetString;
-            } else {
-                $queryFormat = $this->generateSignature() . ' { ' . static::QUERY_FORMAT . ' }';
-            }
-        }
-        $argumentsString = $this->constructArguments();
-
-        return sprintf($queryFormat, $this->generateFieldName(), $argumentsString, $selectionSetString);
     }
 }

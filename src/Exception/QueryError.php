@@ -5,47 +5,63 @@ namespace GraphQL\Exception;
 use RuntimeException;
 
 /**
- * This exception is triggered when:
- * - the GraphQL endpoint returns an error in the provided query
+ * This exception is triggered when the GraphQL endpoint returns an error in the provided query
+ *
+ * Class QueryError
+ *
+ * @package GraphQl\Exception
  */
 class QueryError extends RuntimeException
 {
-    /** @var array<mixed> */
-    protected array $errorDetails;
-
-    /** @var array<mixed> */
+    /**
+     * @var array
+     */
+    protected $errorDetails;
+    /**
+     * @var array
+     */
     protected $data;
-
-    /** @var array<mixed> */
+    /**
+     * @var array
+     */
     protected $errors;
 
-    /** @param array<mixed> $errorDetails */
-    public function __construct(array $errorDetails)
+    /**
+     * QueryError constructor.
+     *
+     * @param array $errorDetails
+     */
+    public function __construct($errorDetails)
     {
-        $this->errors = $errorDetails['errors'];
         $this->errorDetails = $errorDetails['errors'][0];
-
         $this->data = [];
         if (!empty($errorDetails['data'])) {
             $this->data = $errorDetails['data'];
         }
+        $this->errors = $errorDetails['errors'];
         parent::__construct($this->errorDetails['message']);
     }
 
-    /** @return array<mixed> */
-    public function getErrorDetails(): array
+    /**
+     * @return array
+     */
+    public function getErrorDetails()
     {
         return $this->errorDetails;
     }
 
-    /** @return array<mixed> */
-    public function getData(): array
+    /**
+     * @return array
+     */
+    public function getData()
     {
         return $this->data;
     }
 
-    /** @return array<mixed> */
-    public function getErrors(): array
+    /**
+     * @return array
+     */
+    public function getErrors()
     {
         return $this->errors;
     }

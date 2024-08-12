@@ -11,7 +11,7 @@ use InvalidArgumentException;
  */
 class InvalidSelectionException extends InvalidArgumentException
 {
-    public function __construct(string $message = '')
+    public function __construct($message = "")
     {
         parent::__construct($message);
     }

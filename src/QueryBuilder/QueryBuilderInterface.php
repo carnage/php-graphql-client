@@ -4,7 +4,15 @@ namespace GraphQL\QueryBuilder;
 
 use GraphQL\Query;
 
+/**
+ * Interface QueryBuilderInterface
+ *
+ * @package GraphQL\QueryBuilder
+ */
 interface QueryBuilderInterface
 {
-    public function getQuery(): Query;
+    /**
+     * @return Query
+     */
+    function getQuery(): Query;
 }
