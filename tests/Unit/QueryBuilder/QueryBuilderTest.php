@@ -19,7 +19,53 @@ use PHPUnit\Framework\TestCase;
 class QueryBuilderTest extends TestCase
 {
     #[Test]
-    public function itCanBuildQueryWithoutName()
+    public function testDagger(): void
+    {
+
+        $rootQb = new QueryBuilder();
+        $queryStack = [];
+
+        $pipeline = (new QueryBuilder('pipeline'))
+            ->setArgument('name', 'test')
+            ->setArgument('description', 'pipeline description')
+            ->setArgument('labels', [new RawObject('{distribution: alpine}')]);
+        $queryStack[] = $pipeline;
+
+        $container = (new QueryBuilder('container'));
+        $queryStack[] = $container;
+
+
+        $from = (new QueryBuilder('from'))
+            ->setArgument('address', 'alpine:3.16.2');
+        $queryStack[] = $from;
+
+        $withExec = (new QueryBuilder('withExec'))
+            ->setArgument('args', ['cat', '/etc/alpine-release']);
+        $queryStack[] = $withExec;
+
+        $queryStack[] = new QueryBuilder('stdout');
+
+        foreach ($queryStack as $queryBuilder) {
+            $rootQb = $rootQb->selectField($queryBuilder);
+        }
+
+        self::assertSame(
+            'query { pipeline' .
+                '(' .
+                'name: "test" ' .
+                'description: "pipeline description" ' .
+                'labels: [{distribution: alpine}]' .
+                ') ' .
+                'container ' .
+                'from(address: "alpine:3.16.2") ' .
+                'withExec(args: ["cat", "/etc/alpine-release"]) ' .
+                'stdout }',
+            (string) $rootQb->getQuery()
+        );
+    }
+
+    #[Test]
+    public function itCanBuildQueryWithoutName(): void
     {
         $builder = (new QueryBuilder())
             ->selectField(

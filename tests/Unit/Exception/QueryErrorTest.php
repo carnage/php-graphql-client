@@ -4,9 +4,11 @@ namespace GraphQL\Tests\Unit\Exception;
 
 use GraphQL\Exception\QueryError;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[Group('unit')]
 #[CoversClass(QueryError::class)]
 class QueryErrorTest extends TestCase
 {

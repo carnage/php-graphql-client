@@ -6,19 +6,14 @@ use GraphQL\Util\StringLiteralFormatter;
 
 final readonly class Variable implements \Stringable
 {
-    /** @param null|scalar|array<mixed>|RawObject $defaultValue */
     public function __construct(
         public string $name,
         public string $type,
         public bool $nonNullable = false,
-        public null|bool|float|int|string|array|RawObject $defaultValue = null,
+        public mixed $defaultValue = null
     ) {
     }
 
-    /**
-     * @TODO make the default value conversion more robust.
-     * json_encode would not handle Enum types which should not have quotes around it
-     */
     public function __toString(): string
     {
         $varString = sprintf(

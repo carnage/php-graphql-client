@@ -7,7 +7,6 @@ use GraphQL\Exception\QueryError;
 use GraphQL\Exception\MethodNotSupportedException;
 use GraphQL\QueryBuilder\QueryBuilderInterface;
 use GraphQL\Util\GuzzleAdapter;
-use GraphQL\Variable;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Utils;
@@ -20,9 +19,7 @@ class Client
     /** @var array<string|array<string>> */
     protected array $httpHeaders;
 
-    /**
-     * @var array<mixed>
-     */
+    /** @var array<mixed> */
     protected array $options;
 
     /**
@@ -68,9 +65,9 @@ class Client
         bool $resultsAsArray = false,
         array $variables = []
     ): Results {
-        $query = $query instanceof QueryBuilderInterface ?
-            $query->getQuery() :
-            $query;
+        if ($query instanceof QueryBuilderInterface) {
+            $query = $query->getQuery();
+        }
 
         return $this->runRawQuery((string) $query, $resultsAsArray, $variables);
     }

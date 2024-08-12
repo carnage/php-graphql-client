@@ -37,7 +37,7 @@
     },
     "require-dev": {
         "aws/aws-sdk-php": "^3.186",
-        "phpstan/phpstan": "^1.11.4",
+        "phpstan/phpstan": "^1.11.10",
         "squizlabs/php_codesniffer": "3.10.1",
         "phpunit/phpunit": "^10.5.20"
     },

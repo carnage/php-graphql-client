@@ -2,13 +2,17 @@
 
 namespace GraphQL\Tests\Unit\Util;
 
+use BackedEnum;
 use Generator;
+use GraphQL\OperationType;
+use GraphQL\RawObject;
 use GraphQL\Util\StringLiteralFormatter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Stringable;
 
 #[Group('unit')]
 #[CoversClass(StringLiteralFormatter::class)]
@@ -18,7 +22,7 @@ class StringLiteralFormatterTest extends TestCase
     #[DataProvider('provideValuesToFormatForRHS')]
     public function itFormatsRHSValues(
         string $expected,
-        null|bool|float|int|string $value,
+        null|bool|float|int|string|BackedEnum|Stringable $value,
     ): void {
         $actual = StringLiteralFormatter::formatValueForRHS($value);
 
@@ -61,7 +65,7 @@ class StringLiteralFormatterTest extends TestCase
         self::assertSame($expected, $actual);
     }
 
-    /** @return Generator<array{0:string, 1:?scalar}> */
+    /** @return Generator<array{0:string, 1: null|scalar|\Stringable|\BackedEnum}> */
     public static function provideValuesToFormatForRHS(): Generator
     {
         yield 'null' => ['null', null];
@@ -70,11 +74,11 @@ class StringLiteralFormatterTest extends TestCase
         yield 'non-empty string' => ['"someString"', 'someString'];
         yield 'unescaped double quotes in string' => [
             '"\"quotedString\""',
-            '"quotedString"'
+            '"quotedString"',
         ];
         yield 'escaped double quotes in string' => [
             '"\\\\\"quotedString\\\\\""',
-            '\\"quotedString\\"'
+            '\\"quotedString\\"',
         ];
 
         yield 'escaped double quoted string in html' => [
@@ -111,13 +115,26 @@ class StringLiteralFormatterTest extends TestCase
         yield 'bool false' => ['false', false];
 
         yield 'bool true' => ['true', true];
+
+        yield RawObject::class => [
+            '["one", "two", "three"]',
+            new RawObject('["one", "two", "three"]'),
+        ];
+
+        yield Stringable::class => [
+            'Hello World',
+            new class () implements Stringable {
+                public function __toString(): string
+                {
+                    return 'Hello World';
+                }
+            }
+        ];
+
+        yield BackedEnum::class => ['query', OperationType::Query];
     }
 
-    /** @return Generator<array{
-     *      0:string,
-     *      1:array<?scalar>
-     * }>
-     */
+    /** @return Generator<array{ 0:string, 1:array<mixed> }> */
     public static function provideArraysToFormatForGQLQueries(): Generator
     {
         yield 'empty' => ['[]', []];
@@ -131,11 +148,33 @@ class StringLiteralFormatterTest extends TestCase
         yield 'one string' => ['["one"]', ['one']];
         yield 'three strings' => [
             '["one", "two", "three"]',
-            ['one', 'two', 'three']
+            ['one', 'two', 'three'],
         ];
 
         yield 'one bool' => ['[true]', [true]];
         yield 'three bools' => ['[true, false, true]', [true, false, true]];
+
+        yield 'nested string array' => ['[["one"]]', [['one']]];
+        yield 'nested string arrays' => [
+            '[["one"], ["two"], ["three"]]',
+            [['one'], ['two'], ['three']],
+        ];
+        yield 'nested strings array' => [
+            '[["one", "two", "three"]]',
+            [['one', 'two', 'three']],
+        ];
+        yield 'nested strings arrays' => [
+            '[["one", "two", "three"], ["four", "five", "six"], ["seven", "eight", "nine"]]',
+            [['one', 'two', 'three'], ['four', 'five', 'six'], ['seven', 'eight', 'nine']],
+        ];
+
+        yield sprintf('nested %s array', BackedEnum::class) => [
+            '[[query], [mutation, subscription]]',
+            [
+                [OperationType::Query],
+                [OperationType::Mutation, OperationType::Subscription],
+            ]
+        ];
     }
 
     /** @return Generator<array{0:string, 1:string}> */

@@ -2,6 +2,7 @@
 
 namespace GraphQL\QueryBuilder;
 
+use BackedEnum;
 use GraphQL\InlineFragment;
 use GraphQL\Query;
 use GraphQL\RawObject;
@@ -15,10 +16,10 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     /** @var Variable[] */
     private array $variables = [];
 
-    /** @var array<InlineFragment|Query|string> */
+    /** @var array<string|InlineFragment|Query|QueryBuilderInterface> */
     private array $selectionSet = [];
 
-    /** @var array<null|scalar|array<?scalar>|RawObject> */
+    /** @var array<null|scalar|array<mixed>|Stringable|BackedEnum> */
     private array $argumentsList = [];
 
     public function __construct(string $queryObject = '', string $alias = '')
@@ -35,6 +36,13 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
 
     public function getQuery(): Query
     {
+        // Convert nested query builders to query objects
+        foreach ($this->selectionSet as $key => $field) {
+            if ($field instanceof QueryBuilderInterface) {
+                $this->selectionSet[$key] = $field->getQuery();
+            }
+        }
+
         $this->query->setVariables($this->variables);
         $this->query->setArguments($this->argumentsList);
         $this->query->setSelectionSet($this->selectionSet);
@@ -43,38 +51,34 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     }
 
     protected function selectField(
-        InlineFragment|Query|QueryBuilderInterface|string $selection,
-    ): self {
-        $this->selectionSet[] = $selection instanceof QueryBuilderInterface ?
-        $selection->getQuery() :
-        $selection;
+        InlineFragment|Query|QueryBuilderInterface|string $selectedField,
+    ): AbstractQueryBuilder {
+        $this->selectionSet[] = $selectedField;
 
         return $this;
     }
 
-    /** @param null|scalar|array<?scalar>|RawObject $argumentValue */
+    /**
+     * @param null|array<mixed>|scalar|BackedEnum|Stringable $value
+     */
     protected function setArgument(
-        string $argumentName,
-        null|bool|float|int|string|array|RawObject $argumentValue
+        string $name,
+        null|bool|float|int|string|array|Stringable|BackedEnum $value
     ): self {
-        if (
-            is_scalar($argumentValue) ||
-            is_array($argumentValue) ||
-            $argumentValue instanceof RawObject
-        ) {
-            $this->argumentsList[$argumentName] = $argumentValue;
+        if (!is_null($value)) {
+            $this->argumentsList[$name] = $value;
         }
 
         return $this;
     }
 
-    /** @param null|scalar|array<?scalar>|RawObject $defaultValue */
+    /** @param null|array<mixed>|scalar|BackedEnum|Stringable $defaultValue */
     protected function setVariable(
         string $name,
         string $type,
         bool $isRequired = false,
-        null|bool|float|int|string|array|RawObject $defaultValue = null
-    ): self {
+        null|bool|float|int|string|array|Stringable|BackedEnum $defaultValue = null,
+    ): AbstractQueryBuilder {
         $this->variables[] = new Variable(
             $name,
             $type,

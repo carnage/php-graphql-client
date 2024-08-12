@@ -8,15 +8,18 @@ use Generator;
 use GraphQL\Exception\ArgumentException;
 use GraphQL\Exception\InvalidVariableException;
 use GraphQL\InlineFragment;
+use GraphQL\OperationType;
 use GraphQL\Query;
 use GraphQL\RawObject;
 use GraphQL\Variable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 
+#[Group('unit')]
 #[CoversClass(Query::class)]
 class QueryTest extends TestCase
 {
@@ -52,11 +55,32 @@ class QueryTest extends TestCase
     }
 
 
+    /** @param array<mixed> $arguments */
+    #[Test, DataProvider('provideInvalidArguments')]
+    public function itInvalidatesUnsupportedArguments(array $arguments): void
+    {
+        $sut = new Query();
+
+        self::expectException(ArgumentException::class);
+
+        $sut->setArguments($arguments);
+    }
+
     #[Test]
     #[DataProvider('provideQueriesToCastToString')]
     public function itIsStringable(string $expected, Query $sut): void
     {
         self::assertSame($expected, $sut->__toString());
+    }
+
+    /** @return Generator<array{ 0: array<mixed> }> */
+    public static function provideInvalidArguments(): Generator
+    {
+        yield \DateTime::class => [[new \DateTime()]];
+
+        yield sprintf('nested array of %s', \DateTime::class) => [
+            [[[[new \DateTime()]]]],
+        ];
     }
 
     /** @return Generator<array{ 0: string, 1: Query }> */
@@ -199,6 +223,22 @@ class QueryTest extends TestCase
                 ->setArguments(['stringListArg' => ['hello', 'world']]),
         ];
 
+        yield 'nested list argument' => [
+            'query { Object(nestedListArg: [[["hello", "world"]]]) }',
+            (new Query('Object'))
+                ->setArguments(['nestedListArg' => [[['hello', 'world']]]]),
+        ];
+
+        yield 'nested list of BackedEnums argument' => [
+            'query { Object(nestedEnumArg: [[[query, mutation, subscription]]]) }',
+            (new Query('Object'))
+                ->setArguments(['nestedEnumArg' => [[[
+                    OperationType::Query,
+                    OperationType::Mutation,
+                    OperationType::Subscription,
+                ]]]]),
+        ];
+
         yield 'json object argument' => [
             'query { Object(obj: {json_string_array: ["json value"]}) }',
             (new Query('Object'))
@@ -210,28 +250,44 @@ class QueryTest extends TestCase
             (new Query('Object'))
                 ->setArguments(['arg1' => 'val1', 'arg2' => 2, 'arg3' => true]),
         ];
+    }
 
-        yield 'it overwrites previous set selection set' => [
+    #[Test]
+    public function itOverwritesPreviousSelectionSets()
+    {
+        $query = (new Query('Object'))
+            ->setSelectionSet(['field1'])
+            ->setSelectionSet(['field2', 'field3']);
+        $this->assertEquals(
             'query { Object { field2 field3 } }',
-            (new Query('Object'))
-                ->setSelectionSet(['field1'])
-                ->setSelectionSet(['field2', 'field3']),
-        ];
+            (string) $query,
+            'Query has improperly formatted selection set'
+        );
 
-        yield 'nested query' => [
-            "query { Object { field1 field2 Object2 { field3 } } }",
-            (new Query('Object'))
+        return $query;
+    }
+
+    public function testTwoLevelQuery()
+    {
+        $query = (new Query('Object'))
             ->setSelectionSet([
                 'field1',
                 'field2',
                 (new Query('Object2'))
                     ->setSelectionSet(['field3'])
-            ])
-        ];
+            ]);
+        $this->assertEquals(
+            "query { Object { field1 field2 Object2 { field3 } } }",
+            (string) $query,
+            'Two level query not formatted correctly'
+        );
 
-        yield 'nested inline fragment' => [
-            'query { Object { field1 ... on Object { fragment_field1 fragment_field2 } } }',
-            (new Query('Object'))
+        return $query;
+    }
+
+    public function testTwoLevelQueryWithInlineFragment()
+    {
+        $query = (new Query('Object'))
                 ->setSelectionSet([
                     'field1',
                     (new InlineFragment('Object'))
@@ -241,7 +297,87 @@ class QueryTest extends TestCase
                                 'fragment_field2',
                             ]
                         ),
-                ]),
-        ];
+                ]);
+        $this->assertEquals(
+            'query { Object { field1 ... on Object { fragment_field1 fragment_field2 } } }',
+            (string) $query
+        );
+
+        return $query;
+    }
+
+    public function testGettingArguments()
+    {
+        $gql = (new Query('things'))
+            ->setArguments(
+                [
+                   'someClientId' => 'someValueBasedOnCodebase'
+                ]
+            );
+        $cursor_id = 'someCursor';
+        $new_args = $gql->getArguments();
+        $gql->setArguments(
+            array_merge(
+                $new_args,
+                [
+                    'after' => $cursor_id
+                ]
+            )
+        );
+        self::assertEquals(
+            'query { things(someClientId: "someValueBasedOnCodebase" after: "someCursor") }',
+            (string) $gql
+        );
+    }
+
+    public function testGettingNameAndAltering()
+    {
+        $gql = (new Query('things'))
+            ->setSelectionSet(
+                [
+                    'id',
+                    'name',
+                    (new Query('subThings'))
+                        ->setArguments(
+                            [
+                                'filter' => 'providerId123',
+                            ]
+                        )
+                        ->setSelectionSet(
+                            [
+                                'id',
+                                'name'
+                            ]
+                        )
+                ]
+            );
+        $sets = $gql->getSelectionSet();
+        foreach ($sets as $set) {
+            if (($set instanceof Query) === false) {
+                continue;
+            }
+            $name = $set->getFieldName();
+            if ($name !== 'subThings') {
+                continue;
+            }
+            $set->setArguments(
+                [
+                    'filter' => 'providerId456'
+                ]
+            );
+            $set->setSelectionSet(
+                array_merge(
+                    $set->getSelectionSet(),
+                    [
+                        'someField',
+                        'someOtherField'
+                    ]
+                )
+            );
+        }
+        self::assertEquals(
+            'query { things { id name subThings(filter: "providerId456") { id name someField someOtherField } } }',
+            (string) $gql
+        );
     }
 }

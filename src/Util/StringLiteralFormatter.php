@@ -2,7 +2,8 @@
 
 namespace GraphQL\Util;
 
-use GraphQL\RawObject;
+use BackedEnum;
+use Stringable;
 
 class StringLiteralFormatter
 {
@@ -30,7 +31,7 @@ class StringLiteralFormatter
     ];
 
     public static function formatValueForRHS(
-        null|bool|float|int|string|RawObject $value
+        null|bool|float|int|string|BackedEnum|Stringable $value
     ): string {
         if (is_null($value)) {
             return 'null';
@@ -43,9 +44,13 @@ class StringLiteralFormatter
         if (
             is_float($value)
             || is_int($value)
-            || $value instanceof RawObject
+            || $value instanceof Stringable
         ) {
             return (string) $value;
+        }
+
+        if ($value instanceof BackedEnum) {
+            return (string) $value->value;
         }
 
         if (self::isVariable($value)) {
@@ -64,6 +69,7 @@ class StringLiteralFormatter
             },
             $value
         );
+
         return sprintf('"%s"', $value);
     }
 
@@ -72,12 +78,13 @@ class StringLiteralFormatter
         return preg_match('/^\$[_A-Za-z][_0-9A-Za-z]*$/', $value) === 1;
     }
 
-    //@todo make this recursive to handle nested arrays
-    /** @param array<?scalar> $array */
+    /** @param array<mixed> $array */
     public static function formatArrayForGQLQuery(array $array): string
     {
         return sprintf('[%s]', implode(', ', array_map(
-            fn ($p) => StringLiteralFormatter::formatValueForRHS($p),
+            fn ($p) => is_array($p) ?
+                self::formatArrayForGQLQuery($p) :
+                self::formatValueForRHS($p),
             $array,
         )));
     }
@@ -93,6 +100,6 @@ class StringLiteralFormatter
 
     public static function formatLowerCamelCase(string $stringValue): string
     {
-        return lcfirst(static::formatUpperCamelCase($stringValue));
+        return lcfirst(self::formatUpperCamelCase($stringValue));
     }
 }

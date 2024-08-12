@@ -1,6 +1,6 @@
 <?php
 
-namespace GraphQL\Tests;
+namespace GraphQL\Tests\Unit;
 
 use GraphQL\Client;
 use GraphQL\Exception\MethodNotSupportedException;
@@ -8,7 +8,6 @@ use GraphQL\Exception\QueryError;
 use GraphQL\Query;
 use GraphQL\QueryBuilder\QueryBuilder;
 use GraphQL\QueryBuilder\QueryBuilderInterface;
-use GraphQL\RawObject;
 use GraphQL\Variable;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
@@ -19,10 +18,11 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
+#[Group('unit')]
 #[CoversClass(Client::class)]
 class ClientTest extends TestCase
 {

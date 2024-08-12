@@ -11,9 +11,11 @@ use GraphQL\RawObject;
 use GraphQL\Variable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[Group('unit')]
 #[CoversClass(MutationBuilder::class)]
 #[CoversClass(AbstractQueryBuilder::class)]
 class MutationBuilderTest extends TestCase

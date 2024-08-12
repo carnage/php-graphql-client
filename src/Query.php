@@ -2,15 +2,16 @@
 
 namespace GraphQL;
 
+use BackedEnum;
 use GraphQL\Exception\ArgumentException;
-use GraphQL\Exception\InvalidSelectionException;
 use GraphQL\Exception\InvalidVariableException;
-use GraphQL\QueryBuilder\QueryBuilderInterface;
 use GraphQL\Util\StringLiteralFormatter;
 use Stringable;
 
 class Query implements Stringable
 {
+    use FieldTrait;
+
     /**
      * The GraphQL query format
      *
@@ -21,7 +22,7 @@ class Query implements Stringable
     protected const QUERY_FORMAT = '%s%s%s';
 
     /** The type of the operation to be executed on the GraphQL server */
-    protected const OPERATION_TYPE = 'query';
+    protected const OPERATION_TYPE = OperationType::Query->value;
 
     /** The name of the operation to be run on the server */
     protected string $operationName = '';
@@ -36,17 +37,16 @@ class Query implements Stringable
     /**
      * The list of arguments used when querying data
      *
-     * @var array<null|scalar|array<?scalar>|Stringable>
+     * @var array<null|array<mixed>|scalar|Stringable|BackedEnum>
      */
     protected array $arguments = [];
 
     /**
-     * Stores the selection set desired to get from the query, can include nested queries
+     * Private member that's not accessible from outside the class,
+     * used internally to deduce if query is nested or not
      *
-     * @var array<string|InlineFragment|Query>
+     * @var bool
      */
-    protected array $selectionSet;
-
     protected bool $isNested = false;
 
     /**
@@ -99,7 +99,7 @@ class Query implements Stringable
     }
 
     /**
-     * @param array<null|scalar|array<?scalar>|Stringable> $arguments
+     * @param array<null|scalar|array<mixed>|Stringable|BackedEnum> $arguments
      * @throws ArgumentException for invalid arguments
      */
     public function setArguments(array $arguments): Query
@@ -112,21 +112,7 @@ class Query implements Stringable
                 );
             }
 
-            if (is_array($argument)) {
-                foreach ($argument as $item) {
-                    if (!is_null($item) && !is_scalar($item)) {
-                        throw new ArgumentException(
-                            'Only arrays with null|scalar items can be handled',
-                        );
-                    }
-                }
-            }
-
-            if (is_object($argument) && !method_exists($argument, '__toString')) {
-                throw new ArgumentException(
-                    'Only objects with the __toString() method can be handled',
-                );
-            }
+            $this->validateArgument($argument);
         }
 
         $this->arguments = $arguments;
@@ -134,7 +120,32 @@ class Query implements Stringable
         return $this;
     }
 
-    /** @return array<null|scalar|array<?scalar>|Stringable> */
+    private function validateArgument(mixed $value): void
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $this->validateArgument($item);
+            }
+
+            return;
+        }
+
+        if (
+            is_null($value)
+            || is_scalar($value)
+            || $value instanceof Stringable
+            || $value instanceof BackedEnum
+        ) {
+            return;
+        }
+
+        throw new ArgumentException(sprintf(
+            '%s cannot be supported',
+            gettype($value),
+        ));
+    }
+
+    /** @return array<null|scalar|array<?scalar>|Stringable|BackedEnum> */
     public function getArguments(): array
     {
         return $this->arguments;
@@ -156,16 +167,10 @@ class Query implements Stringable
         }
 
         $formattedArguments = [];
-        foreach ($this->arguments as $name => $argument) {
-            if (is_scalar($argument) || is_null($argument)) {
-                $formattedArgument = StringLiteralFormatter::formatValueForRHS($argument);
-            } elseif (is_array($argument)) {
-                $formattedArgument = StringLiteralFormatter::formatArrayForGQLQuery($argument);
-            } else {
-                $formattedArgument = (string) $argument;
-            }
-
-            $formattedArguments[] = sprintf('%s: %s', $name, $formattedArgument);
+        foreach ($this->arguments as $name => $value) {
+            $formattedArguments[] = sprintf('%s: %s', $name, is_array($value) ?
+                    StringLiteralFormatter::formatArrayForGQLQuery($value) :
+                    StringLiteralFormatter::formatValueForRHS($value));
         }
 
         return sprintf('(%s)', implode(' ', $formattedArguments));
@@ -178,73 +183,17 @@ class Query implements Stringable
 
     protected function generateSignature(): string
     {
-        $signatureFormat = '%s%s%s';
-
-        return sprintf($signatureFormat, static::OPERATION_TYPE, $this->operationName, $this->constructVariables());
+        return sprintf(
+            '%s%s%s',
+            static::OPERATION_TYPE,
+            $this->operationName,
+            $this->constructVariables()
+        );
     }
 
     public function setAsNested(): void
     {
         $this->isNested = true;
-    }
-
-    /**
-     * @param array<InlineFragment|Query|QueryBuilderInterface|string> $selectionSet
-     * @throws InvalidSelectionException
-     */
-    public function setSelectionSet(array $selectionSet): self
-    {
-        $selectionSet = array_map(
-            fn ($s) => $s instanceof QueryBuilderInterface ?
-                $s->getQuery() :
-                $s,
-            $selectionSet,
-        );
-
-
-        foreach ($selectionSet as $selection) {
-            if (
-                !is_string($selection) &&
-                !$selection instanceof Query &&
-                !$selection instanceof InlineFragment
-            ) {
-                throw new InvalidSelectionException(sprintf(
-                    'Can only set a selection from one of the following: %s',
-                    implode(', ', [
-                        InlineFragment::class,
-                        Query::class,
-                        QueryBuilderInterface::class,
-                        'string',
-                    ]),
-                ));
-            }
-        }
-
-        $this->selectionSet = $selectionSet;
-        return $this;
-    }
-
-    /** @return array<string|InlineFragment|Query> */
-    public function getSelectionSet(): array
-    {
-        return $this->selectionSet;
-    }
-
-    protected function constructSelectionSet(): string
-    {
-        if (empty($this->selectionSet)) {
-            return '';
-        }
-
-        return sprintf(' { %s }', implode(' ', array_map(
-            function ($selection) {
-                if ($selection instanceof Query) {
-                    $selection->setAsNested();
-                }
-                return $selection;
-            },
-            $this->selectionSet,
-        )));
     }
 
     public function __toString(): string
