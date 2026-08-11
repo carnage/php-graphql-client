@@ -32,8 +32,8 @@
         "php": "^8.2",
         "ext-json": "*",
         "psr/http-message": "^2.0 ",
-        "psr/http-client": "^1.0",
-        "guzzlehttp/guzzle": "^7.0.1"
+        "psr/http-client": "^1.0.3",
+        "guzzlehttp/guzzle": "^8.0.2"
     },
     "require-dev": {
         "aws/aws-sdk-php": "^3.186",
